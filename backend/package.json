@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node esbuild.config.js",
-    "dev": "node esbuild.config.js --watch",
+    "dev": "node --env-file=.env.development src/local-server.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
