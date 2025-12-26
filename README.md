@@ -94,11 +94,20 @@ day-timeline/
 git clone <repo-url>
 cd day-timeline
 
-# Run the setup script
-chmod +x scripts/dev-setup.sh
-./scripts/dev-setup.sh
+# Install dependencies
+npm install
+npm run build:shared
 
-# Start the frontend
+# Start LocalStack (for S3)
+docker compose up -d
+
+# Create the S3 bucket (first time only)
+docker exec day-timeline-localstack awslocal s3 mb s3://day-timeline-storage
+
+# Terminal 1: Start the backend API
+npm run dev:backend
+
+# Terminal 2: Start the frontend
 npm run dev:frontend
 ```
 
@@ -107,20 +116,15 @@ The app will be available at http://localhost:3000
 ### Available commands
 
 ```bash
-npm run dev:frontend   # Start frontend dev server
-npm run dev:backend    # Watch backend for changes
+npm run dev:frontend   # Start frontend dev server (port 3000)
+npm run dev:backend    # Start local API server (port 3001)
 npm run docker:up      # Start LocalStack
 npm run docker:down    # Stop LocalStack
 npm run docker:logs    # View LocalStack logs
 npm run build          # Build all packages
+npm run build:shared   # Build shared types only
 npm run typecheck      # Run TypeScript checks
 ```
-
-### Test user
-
-For local development, a test user is automatically created:
-- Email: `test@example.com`
-- Password: `TestPass123`
 
 ---
 
