@@ -78,6 +78,7 @@ export interface Block {
   notes: string;
   order: number;
   completed: boolean;
+  actualMinutesOverride?: number;
 }
 
 // Day state stored in S3
@@ -155,6 +156,9 @@ export function createDefaultDayState(userId: string, date: string): DayState {
 }
 
 export function calculateBlockActualMinutes(block: Block): number {
+  if (block.actualMinutesOverride !== undefined) {
+    return block.actualMinutesOverride;
+  }
   return block.sessions.reduce((total, session) => {
     if (!session.endedAt) {
       // Session in progress - calculate up to now

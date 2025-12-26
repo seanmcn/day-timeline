@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
@@ -43,6 +44,12 @@ export function BlockItem({
   const deltaMinutes = actualMinutes - block.estimateMinutes;
   const isActive = metrics?.currentBlockId === block.id;
   const hasActiveSession = block.sessions.some((s) => s.endedAt === null);
+
+  // Local state for actual minutes input (syncs on blur)
+  const [localActualMinutes, setLocalActualMinutes] = useState(Math.round(actualMinutes));
+  useEffect(() => {
+    setLocalActualMinutes(Math.round(actualMinutes));
+  }, [actualMinutes]);
 
   // Calculate planned start time
   // For completed blocks, use actual time instead of estimate
@@ -141,7 +148,30 @@ export function BlockItem({
               <span className="ml-1">min</span>
             </div>
 
-            {actualMinutes > 0 && (
+            {block.completed ? (
+              <div className="text-sm">
+                <span className="text-[var(--color-text-muted)]">Actual: </span>
+                <input
+                  type="number"
+                  value={localActualMinutes}
+                  onChange={(e) => setLocalActualMinutes(parseInt(e.target.value) || 0)}
+                  onBlur={() => updateBlock(block.id, { actualMinutesOverride: localActualMinutes })}
+                  className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded px-2 py-1 w-16 text-center"
+                  min="0"
+                  step="15"
+                />
+                <span className="ml-1">min</span>
+                <span
+                  className={`ml-2 ${
+                    deltaMinutes > 0
+                      ? 'text-[var(--color-warning)]'
+                      : 'text-[var(--color-success)]'
+                  }`}
+                >
+                  ({formatDelta(deltaMinutes)})
+                </span>
+              </div>
+            ) : actualMinutes > 0 ? (
               <div className="text-sm">
                 <span className="text-[var(--color-text-muted)]">Actual: </span>
                 <span>{formatDuration(actualMinutes)}</span>
@@ -155,7 +185,7 @@ export function BlockItem({
                   ({formatDelta(deltaMinutes)})
                 </span>
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* Play/Stop button - hidden when completed */}
