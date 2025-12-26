@@ -63,6 +63,16 @@
         "reveal": "silent",
         "panel": "shared"
       }
+    },
+    {
+      "label": "Data: Reset All",
+      "type": "shell",
+      "command": "docker exec day-timeline-localstack awslocal s3 rm s3://day-timeline-storage --recursive",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
     }
   ]
 }
