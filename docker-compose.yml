@@ -1,0 +1,26 @@
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: day-timeline-localstack
+    ports:
+      - "4566:4566"
+      - "4510-4559:4510-4559"
+    environment:
+      - SERVICES=s3,cognito-idp
+      - DEBUG=0
+      - AWS_DEFAULT_REGION=us-east-1
+      - PERSISTENCE=1
+    volumes:
+      - "./docker/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh"
+      - "./volume:/var/lib/localstack"
+    networks:
+      - day-timeline-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  day-timeline-network:
+    driver: bridge
