@@ -1,0 +1,68 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Docker: Ensure Running",
+      "type": "shell",
+      "command": "docker compose up -d && sleep 3 && (docker exec day-timeline-localstack awslocal s3 ls s3://day-timeline-storage 2>/dev/null || docker exec day-timeline-localstack awslocal s3 mb s3://day-timeline-storage)",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Backend: Start",
+      "type": "shell",
+      "command": "npm run dev:backend",
+      "dependsOn": ["Docker: Ensure Running"],
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "dev"
+      },
+      "runOptions": {
+        "instanceLimit": 1,
+        "reevaluateOnRerun": true
+      }
+    },
+    {
+      "label": "Frontend: Start",
+      "type": "shell",
+      "command": "npm run dev:frontend",
+      "dependsOn": ["Docker: Ensure Running"],
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "dev"
+      },
+      "runOptions": {
+        "instanceLimit": 1,
+        "reevaluateOnRerun": true
+      }
+    },
+    {
+      "label": "Dev: Start All",
+      "dependsOn": ["Backend: Start", "Frontend: Start"],
+      "dependsOrder": "parallel",
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "Docker: Stop LocalStack",
+      "type": "shell",
+      "command": "docker compose down",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    }
+  ]
+}
