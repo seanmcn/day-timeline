@@ -21,7 +21,7 @@ export function BlockItem({
   dayStartAt,
   previousBlocks,
 }: BlockItemProps) {
-  const { updateBlock, duplicateBlock, deleteBlock, startSession, stopSession, metrics } =
+  const { updateBlock, duplicateBlock, deleteBlock, completeBlock, uncompleteBlock, startSession, stopSession, metrics } =
     useDayStore();
 
   const {
@@ -45,12 +45,15 @@ export function BlockItem({
   const hasActiveSession = block.sessions.some((s) => s.endedAt === null);
 
   // Calculate planned start time
+  // For completed blocks, use actual time instead of estimate
   let plannedStartTime: string | null = null;
   if (dayStartAt) {
-    const previousMinutes = previousBlocks.reduce(
-      (sum, b) => sum + b.estimateMinutes,
-      0
-    );
+    const previousMinutes = previousBlocks.reduce((sum, b) => {
+      if (b.completed) {
+        return sum + calculateBlockActualMinutes(b);
+      }
+      return sum + b.estimateMinutes;
+    }, 0);
     const startTime = new Date(dayStartAt);
     startTime.setMinutes(startTime.getMinutes() + previousMinutes);
     plannedStartTime = startTime.toISOString();
@@ -70,7 +73,8 @@ export function BlockItem({
       style={style}
       className={`bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)]
                   ${categoryColors[category]} border-l-4
-                  ${isActive ? 'ring-2 ring-[var(--color-accent)]' : ''}`}
+                  ${isActive ? 'ring-2 ring-[var(--color-accent)]' : ''}
+                  ${block.completed ? 'opacity-60' : ''}`}
     >
       <div className="p-4">
         {/* Header row with drag handle and title */}
@@ -92,13 +96,21 @@ export function BlockItem({
           </button>
 
           <div className="flex-1">
-            <input
-              type="text"
-              value={block.label}
-              onChange={(e) => updateBlock(block.id, { label: e.target.value })}
-              className="bg-transparent font-semibold text-lg w-full focus:outline-none
-                         focus:border-b focus:border-[var(--color-accent)]"
-            />
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={block.label}
+                onChange={(e) => updateBlock(block.id, { label: e.target.value })}
+                className={`bg-transparent font-semibold text-lg w-full focus:outline-none
+                           focus:border-b focus:border-[var(--color-accent)]
+                           ${block.completed ? 'line-through' : ''}`}
+              />
+              {block.completed && (
+                <svg width="20" height="20" viewBox="0 0 20 20" className="text-[var(--color-success)] flex-shrink-0">
+                  <path fill="currentColor" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                </svg>
+              )}
+            </div>
             {plannedStartTime && (
               <div className="text-xs text-[var(--color-text-muted)]">
                 Planned: {formatTime(plannedStartTime)}
@@ -120,7 +132,9 @@ export function BlockItem({
                     estimateMinutes: parseInt(e.target.value) || 0,
                   })
                 }
-                className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded px-2 py-1 w-16 text-center"
+                disabled={block.completed}
+                className={`bg-[var(--color-bg)] border border-[var(--color-border)] rounded px-2 py-1 w-16 text-center
+                           ${block.completed ? 'opacity-50 cursor-not-allowed' : ''}`}
                 min="0"
                 step="15"
               />
@@ -144,44 +158,63 @@ export function BlockItem({
             )}
           </div>
 
-          {/* Play/Stop button */}
-          <button
-            onClick={() =>
-              hasActiveSession ? stopSession(block.id) : startSession(block.id)
-            }
-            className={`p-3 rounded-full transition-colors ${
-              hasActiveSession
-                ? 'bg-[var(--color-error)] hover:bg-[var(--color-error)]/90'
-                : 'bg-[var(--color-accent)] hover:bg-[var(--color-accent)]/90'
-            }`}
-            aria-label={hasActiveSession ? 'Stop tracking' : 'Start tracking'}
-          >
-            {hasActiveSession ? (
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="white">
-                <rect x="4" y="4" width="12" height="12" rx="2" />
-              </svg>
-            ) : (
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="white">
-                <path d="M6 4l10 6-10 6V4z" />
-              </svg>
-            )}
-          </button>
+          {/* Play/Stop button - hidden when completed */}
+          {!block.completed && (
+            <button
+              onClick={() =>
+                hasActiveSession ? stopSession(block.id) : startSession(block.id)
+              }
+              className={`p-3 rounded-full transition-colors ${
+                hasActiveSession
+                  ? 'bg-[var(--color-error)] hover:bg-[var(--color-error)]/90'
+                  : 'bg-[var(--color-accent)] hover:bg-[var(--color-accent)]/90'
+              }`}
+              aria-label={hasActiveSession ? 'Stop tracking' : 'Start tracking'}
+            >
+              {hasActiveSession ? (
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="white">
+                  <rect x="4" y="4" width="12" height="12" rx="2" />
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="white">
+                  <path d="M6 4l10 6-10 6V4z" />
+                </svg>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Actions row */}
         <div className="flex gap-2 mt-3 pt-3 border-t border-[var(--color-border)]">
-          <button
-            onClick={() => duplicateBlock(block.id)}
-            className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] px-3 py-1"
-          >
-            Duplicate
-          </button>
-          <button
-            onClick={() => deleteBlock(block.id)}
-            className="text-sm text-[var(--color-error)] hover:text-[var(--color-error)]/80 px-3 py-1"
-          >
-            Delete
-          </button>
+          {block.completed ? (
+            <button
+              onClick={() => uncompleteBlock(block.id)}
+              className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] px-3 py-1"
+            >
+              Undo
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={() => completeBlock(block.id)}
+                className="text-sm text-[var(--color-success)] hover:text-[var(--color-success)]/80 px-3 py-1"
+              >
+                Done
+              </button>
+              <button
+                onClick={() => duplicateBlock(block.id)}
+                className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] px-3 py-1"
+              >
+                Duplicate
+              </button>
+              <button
+                onClick={() => deleteBlock(block.id)}
+                className="text-sm text-[var(--color-error)] hover:text-[var(--color-error)]/80 px-3 py-1"
+              >
+                Delete
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

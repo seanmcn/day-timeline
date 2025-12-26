@@ -29,6 +29,8 @@ interface DayStore {
   updateBlock: (blockId: string, updates: Partial<Block>) => void;
   duplicateBlock: (blockId: string) => void;
   deleteBlock: (blockId: string) => void;
+  completeBlock: (blockId: string) => void;
+  uncompleteBlock: (blockId: string) => void;
 
   // Time tracking
   startSession: (blockId: string) => void;
@@ -199,6 +201,55 @@ export const useDayStore = create<DayStore>((set, get) => ({
       blocks.forEach((block, index) => {
         block.order = index;
       });
+
+      const newState = {
+        ...state.dayState,
+        blocks,
+        updatedAt: new Date().toISOString(),
+      };
+      const metrics = calculateDayMetrics(newState);
+      return { dayState: newState, metrics };
+    });
+    get().saveDay();
+  },
+
+  completeBlock: (blockId: string) => {
+    set((state) => {
+      if (!state.dayState) return state;
+
+      const blocks = state.dayState.blocks.map((block) => {
+        if (block.id !== blockId) return block;
+
+        // Stop any active session
+        const sessions = block.sessions.map((s) =>
+          s.endedAt === null ? { ...s, endedAt: new Date().toISOString() } : s
+        );
+
+        return {
+          ...block,
+          sessions,
+          completed: true,
+        };
+      });
+
+      const newState = {
+        ...state.dayState,
+        blocks,
+        updatedAt: new Date().toISOString(),
+      };
+      const metrics = calculateDayMetrics(newState);
+      return { dayState: newState, metrics };
+    });
+    get().saveDay();
+  },
+
+  uncompleteBlock: (blockId: string) => {
+    set((state) => {
+      if (!state.dayState) return state;
+
+      const blocks = state.dayState.blocks.map((block) =>
+        block.id === blockId ? { ...block, completed: false } : block
+      );
 
       const newState = {
         ...state.dayState,

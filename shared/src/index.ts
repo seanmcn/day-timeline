@@ -77,6 +77,7 @@ export interface Block {
   sessions: TimeSession[];
   notes: string;
   order: number;
+  completed: boolean;
 }
 
 // Day state stored in S3
@@ -139,6 +140,7 @@ export function createDefaultDayState(userId: string, date: string): DayState {
     sessions: [],
     notes: '',
     order: index,
+    completed: false,
   }));
 
   return {
