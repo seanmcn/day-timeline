@@ -7,17 +7,11 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 3000,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
-    },
   },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@day-timeline/shared': path.resolve(__dirname, '../shared/src/index.ts'),
     },
   },
 });

@@ -18,7 +18,7 @@ interface BlockItemProps {
 
 export function BlockItem({
   block,
-  index,
+  index: _index,
   dayStartAt,
   previousBlocks,
 }: BlockItemProps) {

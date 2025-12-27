@@ -38,6 +38,12 @@ volume/
 # AWS
 .aws-sam/
 
+# Amplify
+.amplify/
+amplify_outputs.json
+amplify_outputs.d.ts
+amplify/node_modules/
+
 # Testing
 coverage/
 

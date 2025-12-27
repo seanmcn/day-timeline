@@ -12,7 +12,18 @@
       }
     },
     {
-      "label": "Backend: Start",
+      "label": "Backend: Deploy",
+      "type": "shell",
+      "command": "npm run deploy",
+      "dependsOn": ["Docker: Ensure Running"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Backend: Watch",
       "type": "shell",
       "command": "npm run dev:backend",
       "dependsOn": ["Docker: Ensure Running"],
@@ -47,7 +58,7 @@
     },
     {
       "label": "Dev: Start All",
-      "dependsOn": ["Backend: Start", "Frontend: Start"],
+      "dependsOn": ["Backend: Watch", "Frontend: Start"],
       "dependsOrder": "parallel",
       "problemMatcher": [],
       "runOptions": {

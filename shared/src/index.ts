@@ -81,11 +81,13 @@ export interface Block {
   actualMinutesOverride?: number;
 }
 
-// Day state stored in S3
+// Day state stored in DynamoDB via Amplify Data
+// Note: userId is populated from auth context, not stored directly
+// (Amplify manages ownership via auto-generated 'owner' field)
 export interface DayState {
   version: 1;
   date: string; // YYYY-MM-DD
-  userId: string;
+  userId: string; // Populated from auth context
   dayStartAt: string | null; // ISO 8601 UTC, null if day not started
   blocks: Block[];
   createdAt: string; // ISO 8601 UTC

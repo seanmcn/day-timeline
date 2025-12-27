@@ -7,7 +7,7 @@ import {
   generateId,
   calculateDayMetrics,
 } from '@day-timeline/shared';
-import { api } from '@/lib/api';
+import { dataApi } from '@/lib/data-api';
 
 interface DayStore {
   dayState: DayState | null;
@@ -51,7 +51,7 @@ export const useDayStore = create<DayStore>((set, get) => ({
   loadDay: async (date: string) => {
     set({ isLoading: true, error: null });
     try {
-      const state = await api.getState(date);
+      const state = await dataApi.getState(date);
       const metrics = calculateDayMetrics(state);
       set({ dayState: state, metrics, isLoading: false });
     } catch (err) {
@@ -68,7 +68,7 @@ export const useDayStore = create<DayStore>((set, get) => ({
 
     set({ isSaving: true });
     try {
-      await api.putState(dayState.date, dayState);
+      await dataApi.putState(dayState.date, dayState);
       set({ isSaving: false });
     } catch (err) {
       set({

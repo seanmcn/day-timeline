@@ -1,8 +1,10 @@
 import { useDayStore } from '@/store/dayStore';
+import { useAuthStore } from '@/store/authStore';
 import { getTimeInputValue, setTimeFromInput } from '@/lib/time';
 
 export function Header() {
   const { dayState, updateDayStart, isSaving } = useDayStore();
+  const { user, logout } = useAuthStore();
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!dayState?.dayStartAt) return;
@@ -35,6 +37,18 @@ export function Header() {
               Saving...
             </span>
           )}
+
+          <div className="flex items-center gap-2 pl-4 border-l border-[var(--color-border)]">
+            <span className="text-sm text-[var(--color-text-muted)]">
+              {user?.email}
+            </span>
+            <button
+              onClick={logout}
+              className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </div>
     </header>
