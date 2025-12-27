@@ -1,3 +1,5 @@
+import { motion } from 'framer-motion';
+import { Check } from 'lucide-react';
 import { type Task } from '@day-timeline/shared';
 
 interface TaskItemProps {
@@ -7,47 +9,39 @@ interface TaskItemProps {
 
 export function TaskItem({ task, onToggle }: TaskItemProps) {
   return (
-    <div
-      className={`flex items-center gap-3 py-2 ${
-        task.completed ? 'opacity-60' : ''
-      }`}
+    <motion.div
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="subtask-item group py-1.5 px-2"
+      onClick={onToggle}
     >
-      <button
-        onClick={onToggle}
-        className="flex-shrink-0 w-5 h-5 rounded border border-[var(--color-border)]
-                   flex items-center justify-center transition-colors
-                   hover:border-[var(--color-accent)]"
-        aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
+      <div
+        className={`subtask-checkbox w-4 h-4 ${task.completed ? 'checked' : ''}`}
       >
         {task.completed && (
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 12 12"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 500 }}
           >
-            <path d="M2 6l3 3 5-6" />
-          </svg>
+            <Check size={10} className="text-[hsl(var(--primary-foreground))]" />
+          </motion.div>
         )}
-      </button>
-
+      </div>
       <span
-        className={`flex-1 text-sm ${
-          task.completed ? 'line-through text-[var(--color-text-muted)]' : ''
+        className={`flex-1 text-xs ${
+          task.completed
+            ? 'line-through text-[hsl(var(--muted-foreground))]'
+            : ''
         }`}
       >
         {task.name}
       </span>
-
       {task.estimateMinutes !== undefined && task.estimateMinutes > 0 && (
-        <span className="text-xs text-[var(--color-text-muted)]">
+        <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
           {task.estimateMinutes}m
         </span>
       )}
-    </div>
+    </motion.div>
   );
 }

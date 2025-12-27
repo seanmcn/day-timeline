@@ -1,3 +1,4 @@
+import { AnimatePresence } from 'framer-motion';
 import {
   DndContext,
   DragEndEvent,
@@ -13,10 +14,15 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import { type Block } from '@day-timeline/shared';
 import { useDayStore } from '@/store/dayStore';
 import { BlockItem } from './BlockItem/index';
 
-export function BlockList() {
+interface BlockListProps {
+  onEditBlock: (block: Block) => void;
+}
+
+export function BlockList({ onEditBlock }: BlockListProps) {
   const { dayState, reorderBlocks } = useDayStore();
 
   const sensors = useSensors(
@@ -57,15 +63,18 @@ export function BlockList() {
     >
       <SortableContext items={blockIds} strategy={verticalListSortingStrategy}>
         <div className="space-y-3">
-          {sortedBlocks.map((block, index) => (
-            <BlockItem
-              key={block.id}
-              block={block}
-              index={index}
-              dayStartAt={dayState.dayStartAt}
-              previousBlocks={sortedBlocks.slice(0, index)}
-            />
-          ))}
+          <AnimatePresence mode="popLayout">
+            {sortedBlocks.map((block, index) => (
+              <BlockItem
+                key={block.id}
+                block={block}
+                index={index}
+                dayStartAt={dayState.dayStartAt}
+                previousBlocks={sortedBlocks.slice(0, index)}
+                onEdit={onEditBlock}
+              />
+            ))}
+          </AnimatePresence>
         </div>
       </SortableContext>
     </DndContext>
