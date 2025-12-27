@@ -9,7 +9,6 @@ import {
   Trash2,
   Play,
   Pause,
-  Check,
   CheckCircle2,
 } from 'lucide-react';
 import { type Block, calculateBlockActualMinutes } from '@day-timeline/shared';
@@ -240,15 +239,6 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
                 <div className="flex items-center gap-2">
                   {!block.completed && (
                     <>
-                      <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onClick={handleDone}
-                        className="min-w-[44px] min-h-[44px] px-3 rounded-xl bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.3)] active:bg-[hsl(var(--success)/0.4)] transition-colors flex items-center justify-center gap-1.5 text-sm font-medium"
-                        aria-label="Mark complete"
-                      >
-                        <Check size={18} />
-                        <span className="hidden sm:inline">Done</span>
-                      </motion.button>
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         onClick={() =>
