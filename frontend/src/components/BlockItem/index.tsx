@@ -77,6 +77,8 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
 
   const isActive = metrics?.currentBlockId === block.id;
   const hasActiveSession = block.sessions.some((s) => s.endedAt === null);
+  const hasBeenStarted = block.sessions.length > 0;
+  const isPaused = hasBeenStarted && !hasActiveSession && !block.completed;
   const actualMinutes = calculateBlockActualMinutes(block);
 
   // Calculate planned time
@@ -254,7 +256,7 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
                             ? 'bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))]'
                             : 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] glow-primary'
                         }`}
-                        aria-label={hasActiveSession ? 'Pause' : 'Start'}
+                        aria-label={hasActiveSession ? 'Pause' : isPaused ? 'Resume' : 'Start'}
                       >
                         {hasActiveSession ? (
                           <Pause size={18} />
@@ -262,7 +264,7 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
                           <Play size={18} className="ml-0.5" />
                         )}
                         <span className="hidden sm:inline">
-                          {hasActiveSession ? 'Pause' : 'Start'}
+                          {hasActiveSession ? 'Pause' : isPaused ? 'Resume' : 'Start'}
                         </span>
                       </motion.button>
                     </>
@@ -272,7 +274,8 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
 
               {/* Live Timer */}
               <LiveTimer
-                isActive={hasActiveSession}
+                isRunning={hasActiveSession}
+                isPaused={isPaused}
                 actualMinutes={actualMinutes}
                 estimateMinutes={block.estimateMinutes}
               />
