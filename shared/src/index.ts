@@ -151,15 +151,24 @@ export interface DayState {
   updatedAt: string; // ISO 8601 UTC
 }
 
+// Category breakdown with planned vs actual
+export interface CategoryMetrics {
+  planned: number;
+  actual: number;
+}
+
 // Computed metrics (calculated on frontend)
 export interface DayMetrics {
   totalPlannedMinutes: number;
   totalActualMinutes: number;
   totalDeltaMinutes: number; // actual - planned
+  // Legacy fields (actual minutes only) - kept for compatibility
   workMinutes: number;
   movementMinutes: number;
   leisureMinutes: number;
   routineMinutes: number;
+  // Category breakdowns with planned vs actual (dynamic keys)
+  categories: Record<string, CategoryMetrics>;
   plannedBedtime: string | null; // ISO 8601 UTC
   forecastBedtime: string | null; // ISO 8601 UTC
   currentBlockId: string | null;
@@ -280,33 +289,24 @@ export function calculateBlockActualMinutes(block: Block): number {
 export function calculateDayMetrics(state: DayState): DayMetrics {
   let totalPlannedMinutes = 0;
   let totalActualMinutes = 0;
-  let workMinutes = 0;
-  let movementMinutes = 0;
-  let leisureMinutes = 0;
-  let routineMinutes = 0;
   let currentBlockId: string | null = null;
+
+  // Dynamic category tracking with planned and actual
+  const categories: Record<string, CategoryMetrics> = {};
 
   for (const block of state.blocks) {
     // Use effective estimate (respects useTaskEstimates)
-    totalPlannedMinutes += getBlockEffectiveEstimate(block);
+    const plannedMinutes = getBlockEffectiveEstimate(block);
+    totalPlannedMinutes += plannedMinutes;
     const actualMinutes = calculateBlockActualMinutes(block);
     totalActualMinutes += actualMinutes;
 
-    // Use category stored directly on block
-    switch (block.category) {
-      case 'work':
-        workMinutes += actualMinutes;
-        break;
-      case 'movement':
-        movementMinutes += actualMinutes;
-        break;
-      case 'leisure':
-        leisureMinutes += actualMinutes;
-        break;
-      case 'routine':
-        routineMinutes += actualMinutes;
-        break;
+    // Track both planned and actual per category (dynamic)
+    if (!categories[block.category]) {
+      categories[block.category] = { planned: 0, actual: 0 };
     }
+    categories[block.category].planned += plannedMinutes;
+    categories[block.category].actual += actualMinutes;
 
     // Check for active session
     const hasActiveSession = block.sessions.some((s) => s.endedAt === null);
@@ -335,10 +335,13 @@ export function calculateDayMetrics(state: DayState): DayMetrics {
     totalPlannedMinutes,
     totalActualMinutes,
     totalDeltaMinutes: totalActualMinutes - totalPlannedMinutes,
-    workMinutes,
-    movementMinutes,
-    leisureMinutes,
-    routineMinutes,
+    // Legacy fields for compatibility
+    workMinutes: categories.work?.actual ?? 0,
+    movementMinutes: categories.movement?.actual ?? 0,
+    leisureMinutes: categories.leisure?.actual ?? 0,
+    routineMinutes: categories.routine?.actual ?? 0,
+    // Dynamic category breakdowns
+    categories,
     plannedBedtime,
     forecastBedtime,
     currentBlockId,

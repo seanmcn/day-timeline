@@ -27,6 +27,7 @@ interface DayStore {
   resetDay: () => Promise<void>;
 
   // Block actions
+  addBlock: (block: Omit<Block, 'id' | 'order' | 'sessions' | 'completed'>) => void;
   reorderBlocks: (activeId: string, overId: string) => void;
   updateBlock: (blockId: string, updates: Partial<Block>) => void;
   duplicateBlock: (blockId: string) => void;
@@ -129,6 +130,31 @@ export const useDayStore = create<DayStore>((set, get) => ({
         isLoading: false,
       });
     }
+  },
+
+  addBlock: (blockData) => {
+    set((state) => {
+      if (!state.dayState) return state;
+
+      const newBlock: Block = {
+        ...blockData,
+        id: generateId(),
+        order: state.dayState.blocks.length,
+        sessions: [],
+        completed: false,
+      };
+
+      const blocks = [...state.dayState.blocks, newBlock];
+
+      const newState = {
+        ...state.dayState,
+        blocks,
+        updatedAt: new Date().toISOString(),
+      };
+      const metrics = calculateDayMetrics(newState);
+      return { dayState: newState, metrics };
+    });
+    get().saveDay();
   },
 
   reorderBlocks: (activeId: string, overId: string) => {
