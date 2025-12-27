@@ -13,7 +13,7 @@ function formatDisplayDate(dateKey: string): string {
   const date = new Date(dateKey + 'T12:00:00');
   return date.toLocaleDateString('en-US', {
     weekday: 'long',
-    month: 'long',
+    month: 'short',
     day: 'numeric',
   });
 }
@@ -46,9 +46,20 @@ export function DateNavigator({ currentDate, onDateChange }: DateNavigatorProps)
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-card p-4 mb-4"
+        className="glass-card p-4 mb-4 relative"
       >
-        <div className="flex items-center justify-between">
+        {/* Settings button - top right on desktop only */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setIsSettingsOpen(true)}
+          className="action-button p-1.5 absolute top-2 right-2 hidden lg:flex"
+          aria-label="Day settings"
+        >
+          <Settings2 size={16} />
+        </motion.button>
+
+        {/* Mobile layout */}
+        <div className="flex items-center justify-between lg:hidden">
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={handlePrevious}
@@ -99,6 +110,47 @@ export function DateNavigator({ currentDate, onDateChange }: DateNavigatorProps)
           >
             <ChevronRight size={20} />
           </motion.button>
+        </div>
+
+        {/* Desktop layout */}
+        <div className="hidden lg:flex flex-col items-center gap-2">
+          <span className="text-base font-heading font-semibold">
+            {formatDisplayDate(currentDate)}
+          </span>
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={handlePrevious}
+              className="action-button p-2"
+              aria-label="Previous day"
+            >
+              <ChevronLeft size={18} />
+            </motion.button>
+            {!isToday ? (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleToday}
+                className="flex items-center gap-1 text-xs text-[hsl(var(--primary))] hover:text-[hsl(var(--primary)/0.8)] transition-colors px-2"
+              >
+                <Calendar size={12} />
+                Back to Today
+              </motion.button>
+            ) : (
+              <span className="text-xs text-[hsl(var(--muted-foreground))] px-2">
+                Today
+              </span>
+            )}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={handleNext}
+              className="action-button p-2"
+              aria-label="Next day"
+            >
+              <ChevronRight size={18} />
+            </motion.button>
+          </div>
         </div>
       </motion.div>
 
