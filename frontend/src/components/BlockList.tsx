@@ -92,9 +92,7 @@ export function BlockList({ onEditBlock, showCompletedInList = false }: BlockLis
                   block={block}
                   index={index}
                   dayStartAt={dayState.dayStartAt}
-                  previousBlocks={sortedBlocks
-                    .slice(0, sortedBlocks.findIndex((b) => b.id === block.id))
-                    .filter((b) => !b.completed || isPending(b.id) || showCompletedInList)}
+                  previousBlocks={sortedBlocks.slice(0, sortedBlocks.findIndex((b) => b.id === block.id))}
                   onEdit={onEditBlock}
                   isPendingCompletion={blockIsPending}
                   countdownSeconds={blockIsPending ? getSecondsRemaining(block.id) : 0}
