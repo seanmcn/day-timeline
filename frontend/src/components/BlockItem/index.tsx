@@ -94,18 +94,53 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
   const isPaused = hasBeenStarted && !hasActiveSession && !block.completed;
   const actualMinutes = calculateBlockActualMinutes(block);
 
-  // Calculate planned time
-  const plannedTime = (() => {
-    if (!dayStartAt) return null;
-    const previousMinutes = previousBlocks.reduce((sum, b) => {
+  // Calculate planned and projected times (accounting for delays)
+  const { projectedTime, delayMinutes } = (() => {
+    if (!dayStartAt) return { projectedTime: null, delayMinutes: 0 };
+
+    const now = new Date();
+    const cumulativePlanned = new Date(dayStartAt);
+    let cumulativeProjected = new Date(dayStartAt);
+
+    for (const b of previousBlocks) {
       if (b.completed) {
-        return sum + calculateBlockActualMinutes(b);
+        const actual = calculateBlockActualMinutes(b);
+        cumulativePlanned.setMinutes(cumulativePlanned.getMinutes() + actual);
+        cumulativeProjected.setMinutes(cumulativeProjected.getMinutes() + actual);
+      } else if (b.sessions.length > 0) {
+        // Started but not completed - use actual start time and current elapsed time
+        const startedAt = new Date(b.sessions[0].startedAt);
+        cumulativePlanned.setMinutes(cumulativePlanned.getMinutes() + b.estimateMinutes);
+        // Jump to when this block actually started if we're behind
+        if (cumulativeProjected < startedAt) {
+          cumulativeProjected = new Date(startedAt);
+        }
+        cumulativeProjected.setMinutes(cumulativeProjected.getMinutes() + calculateBlockActualMinutes(b));
+      } else {
+        // Not started - use estimate for planned
+        cumulativePlanned.setMinutes(cumulativePlanned.getMinutes() + b.estimateMinutes);
+
+        // For projected, if we're behind NOW, jump to now
+        if (cumulativeProjected < now) {
+          cumulativeProjected = new Date(now);
+        }
+        cumulativeProjected.setMinutes(cumulativeProjected.getMinutes() + b.estimateMinutes);
       }
-      return sum + b.estimateMinutes;
-    }, 0);
-    const planned = new Date(dayStartAt);
-    planned.setMinutes(planned.getMinutes() + previousMinutes);
-    return planned.toISOString();
+    }
+
+    // For current block: use actual start time if started, otherwise use now if behind
+    if (block.sessions.length > 0) {
+      // Block has been started - use the actual start time
+      cumulativeProjected = new Date(block.sessions[0].startedAt);
+    } else if (!block.completed && cumulativeProjected < now) {
+      cumulativeProjected = new Date(now);
+    }
+
+    const projectedTime = cumulativeProjected.toISOString();
+    const delayMs = cumulativeProjected.getTime() - cumulativePlanned.getTime();
+    const delayMinutes = Math.max(0, Math.floor(delayMs / 60000));
+
+    return { projectedTime, delayMinutes };
   })();
 
   const blockState = block.completed ? 'completed' : isActive ? 'active' : '';
@@ -208,9 +243,14 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
                       </motion.span>
                     )}
                   </div>
-                  {plannedTime && (
+                  {projectedTime && (
                     <div className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
-                      {formatTime(plannedTime)}
+                      {formatTime(projectedTime)}
+                      {delayMinutes > 5 && (
+                        <span className="ml-2 text-xs text-orange-400">
+                          +{formatDuration(delayMinutes, false)} behind
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
