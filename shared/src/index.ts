@@ -1,65 +1,121 @@
-// Block Types (hardcoded for MVP)
-export const BLOCK_TYPES = {
-  WAKE_WARMUP: 'wake-warmup',
-  DEEP_WORK: 'deep-work',
-  BREAK_MOVEMENT: 'break-movement',
-  FOOD_ADMIN: 'food-admin',
-  DOTA: 'dota',
-  LIGHT_WORK: 'light-work',
-  WIND_DOWN: 'wind-down',
-  BED_COMICS: 'bed-comics',
-} as const;
-
-export type BlockType = (typeof BLOCK_TYPES)[keyof typeof BLOCK_TYPES];
-
+// Block category for organizing and color-coding
 export type BlockCategory = 'work' | 'movement' | 'routine' | 'leisure';
 
-// Default block configurations
-export const DEFAULT_BLOCKS: Record<
-  BlockType,
-  { label: string; defaultMinutes: number; category: BlockCategory }
-> = {
-  [BLOCK_TYPES.WAKE_WARMUP]: {
-    label: 'Wake + Warm-up',
+// Task within a template (no completion state)
+export interface TaskTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  estimateMinutes?: number;
+  order: number;
+}
+
+// Task within a daily block (has completion state)
+export interface Task {
+  id: string;
+  templateId?: string; // Reference to original template task
+  name: string;
+  description?: string;
+  estimateMinutes?: number;
+  completed: boolean;
+  order: number;
+}
+
+// User's reusable block template
+export interface BlockTemplate {
+  id: string;
+  name: string;
+  defaultMinutes: number;
+  category: BlockCategory;
+  tasks: TaskTemplate[];
+  useTaskEstimates: boolean; // If true, estimate = sum of task estimates
+  order: number;
+  isDefault: boolean; // System default (can be hidden but not deleted)
+  isHidden: boolean; // User can hide templates they don't use
+}
+
+// Collection of user's block templates stored in DB
+export interface UserTemplates {
+  version: 1;
+  userId: string;
+  templates: BlockTemplate[];
+  createdAt: string; // ISO 8601 UTC
+  updatedAt: string; // ISO 8601 UTC
+}
+
+// Default templates for new users
+export const DEFAULT_TEMPLATES: Omit<BlockTemplate, 'order'>[] = [
+  {
+    id: 'morning-routine',
+    name: 'Morning Routine',
     defaultMinutes: 90,
     category: 'routine',
+    tasks: [],
+    useTaskEstimates: false,
+    isDefault: true,
+    isHidden: false,
   },
-  [BLOCK_TYPES.DEEP_WORK]: {
-    label: 'Deep Work',
+  {
+    id: 'deep-work-1',
+    name: 'Deep Work',
     defaultMinutes: 150,
     category: 'work',
+    tasks: [],
+    useTaskEstimates: false,
+    isDefault: true,
+    isHidden: false,
   },
-  [BLOCK_TYPES.BREAK_MOVEMENT]: {
-    label: 'Break + Movement',
-    defaultMinutes: 30,
-    category: 'movement',
-  },
-  [BLOCK_TYPES.FOOD_ADMIN]: {
-    label: 'Food + Admin',
-    defaultMinutes: 90,
+  {
+    id: 'lunch',
+    name: 'Lunch',
+    defaultMinutes: 60,
     category: 'routine',
+    tasks: [],
+    useTaskEstimates: false,
+    isDefault: true,
+    isHidden: false,
   },
-  [BLOCK_TYPES.DOTA]: {
-    label: 'Dota',
-    defaultMinutes: 90,
-    category: 'leisure',
+  {
+    id: 'deep-work-2',
+    name: 'Deep Work',
+    defaultMinutes: 150,
+    category: 'work',
+    tasks: [],
+    useTaskEstimates: false,
+    isDefault: true,
+    isHidden: false,
   },
-  [BLOCK_TYPES.LIGHT_WORK]: {
-    label: 'Light Work',
+  {
+    id: 'dinner',
+    name: 'Dinner',
+    defaultMinutes: 60,
+    category: 'routine',
+    tasks: [],
+    useTaskEstimates: false,
+    isDefault: true,
+    isHidden: false,
+  },
+  {
+    id: 'light-work',
+    name: 'Light Work',
     defaultMinutes: 90,
     category: 'work',
+    tasks: [],
+    useTaskEstimates: false,
+    isDefault: true,
+    isHidden: false,
   },
-  [BLOCK_TYPES.WIND_DOWN]: {
-    label: 'Wind-down',
+  {
+    id: 'wind-down',
+    name: 'Wind Down',
     defaultMinutes: 120,
     category: 'routine',
+    tasks: [],
+    useTaskEstimates: false,
+    isDefault: true,
+    isHidden: false,
   },
-  [BLOCK_TYPES.BED_COMICS]: {
-    label: 'Bed (Comics)',
-    defaultMinutes: 120,
-    category: 'routine',
-  },
-};
+];
 
 // Time tracking session
 export interface TimeSession {
@@ -71,19 +127,20 @@ export interface TimeSession {
 // Individual block in the day
 export interface Block {
   id: string;
-  type: BlockType;
-  label: string; // Can be customized from default
+  templateId?: string; // Reference to BlockTemplate.id
+  label: string;
   estimateMinutes: number;
+  category: BlockCategory;
   sessions: TimeSession[];
+  tasks: Task[];
   notes: string;
   order: number;
   completed: boolean;
   actualMinutesOverride?: number;
+  useTaskEstimates: boolean; // If true, estimate = sum of task estimates
 }
 
 // Day state stored in DynamoDB via Amplify Data
-// Note: userId is populated from auth context, not stored directly
-// (Amplify manages ownership via auto-generated 'owner' field)
 export interface DayState {
   version: 1;
   date: string; // YYYY-MM-DD
@@ -92,14 +149,6 @@ export interface DayState {
   blocks: Block[];
   createdAt: string; // ISO 8601 UTC
   updatedAt: string; // ISO 8601 UTC
-}
-
-// User's default template
-export interface DayTemplate {
-  version: 1;
-  userId: string;
-  blocks: Omit<Block, 'sessions'>[];
-  updatedAt: string;
 }
 
 // Computed metrics (calculated on frontend)
@@ -131,27 +180,81 @@ export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
-export function createDefaultDayState(userId: string, date: string): DayState {
-  const now = new Date().toISOString();
-  const blockTypes = Object.keys(DEFAULT_BLOCKS) as BlockType[];
+// Calculate block estimate from its tasks
+export function calculateBlockEstimateFromTasks(tasks: Task[] | TaskTemplate[]): number {
+  return tasks.reduce((sum, task) => sum + (task.estimateMinutes || 0), 0);
+}
 
-  const defaultBlocks: Block[] = blockTypes.map((type, index) => ({
+// Get effective estimate for a block (respects useTaskEstimates flag)
+export function getBlockEffectiveEstimate(block: Block): number {
+  if (block.useTaskEstimates && block.tasks.length > 0) {
+    return calculateBlockEstimateFromTasks(block.tasks);
+  }
+  return block.estimateMinutes;
+}
+
+// Create a block from a template
+export function createBlockFromTemplate(template: BlockTemplate, order: number): Block {
+  return {
     id: generateId(),
-    type,
-    label: DEFAULT_BLOCKS[type].label,
-    estimateMinutes: DEFAULT_BLOCKS[type].defaultMinutes,
+    templateId: template.id,
+    label: template.name,
+    estimateMinutes: template.useTaskEstimates
+      ? calculateBlockEstimateFromTasks(template.tasks)
+      : template.defaultMinutes,
+    category: template.category,
     sessions: [],
+    tasks: template.tasks.map((t, i) => ({
+      id: generateId(),
+      templateId: t.id,
+      name: t.name,
+      description: t.description,
+      estimateMinutes: t.estimateMinutes,
+      completed: false,
+      order: i,
+    })),
     notes: '',
-    order: index,
+    order,
     completed: false,
-  }));
+    useTaskEstimates: template.useTaskEstimates,
+  };
+}
+
+// Initialize user templates with defaults
+export function createDefaultUserTemplates(userId: string): UserTemplates {
+  const now = new Date().toISOString();
+  return {
+    version: 1,
+    userId,
+    templates: DEFAULT_TEMPLATES.map((t, i) => ({ ...t, order: i })),
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+// Create default day state from templates
+export function createDefaultDayState(
+  userId: string,
+  date: string,
+  templates?: BlockTemplate[]
+): DayState {
+  const now = new Date().toISOString();
+
+  // Use provided templates or fall back to defaults
+  const activeTemplates = templates
+    ? templates.filter((t) => !t.isHidden).sort((a, b) => a.order - b.order)
+    : DEFAULT_TEMPLATES.map((t, i) => ({ ...t, order: i }));
+
+  const blocks: Block[] = activeTemplates.map((template, index) =>
+    createBlockFromTemplate(template as BlockTemplate, index)
+  );
 
   return {
     version: 1,
     date,
     userId,
     dayStartAt: null,
-    blocks: defaultBlocks,
+    blocks,
     createdAt: now,
     updatedAt: now,
   };
@@ -184,12 +287,13 @@ export function calculateDayMetrics(state: DayState): DayMetrics {
   let currentBlockId: string | null = null;
 
   for (const block of state.blocks) {
-    totalPlannedMinutes += block.estimateMinutes;
+    // Use effective estimate (respects useTaskEstimates)
+    totalPlannedMinutes += getBlockEffectiveEstimate(block);
     const actualMinutes = calculateBlockActualMinutes(block);
     totalActualMinutes += actualMinutes;
 
-    const category = DEFAULT_BLOCKS[block.type]?.category || 'routine';
-    switch (category) {
+    // Use category stored directly on block
+    switch (block.category) {
       case 'work':
         workMinutes += actualMinutes;
         break;

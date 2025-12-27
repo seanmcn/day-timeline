@@ -10,6 +10,13 @@ const schema = a.schema({
     })
     .secondaryIndexes((index) => [index('date')])
     .authorization((allow) => [allow.owner()]),
+
+  UserTemplates: a
+    .model({
+      version: a.integer().default(1),
+      templates: a.json(), // BlockTemplate[] stored as JSON
+    })
+    .authorization((allow) => [allow.owner()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
