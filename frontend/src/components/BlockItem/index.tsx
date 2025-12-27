@@ -290,6 +290,7 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
                 <TaskList
                   tasks={block.tasks}
                   blockId={block.id}
+                  isBlockCompleted={block.completed}
                   onToggleTask={(taskId) => toggleTask(block.id, taskId)}
                 />
               )}

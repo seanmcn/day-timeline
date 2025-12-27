@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { type Task } from '@day-timeline/shared';
@@ -7,11 +7,19 @@ import { TaskItem } from './TaskItem';
 interface TaskListProps {
   tasks: Task[];
   blockId: string;
+  isBlockCompleted?: boolean;
   onToggleTask: (taskId: string) => void;
 }
 
-export function TaskList({ tasks, blockId: _blockId, onToggleTask }: TaskListProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+export function TaskList({ tasks, blockId: _blockId, isBlockCompleted, onToggleTask }: TaskListProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Collapse when block is marked as done
+  useEffect(() => {
+    if (isBlockCompleted) {
+      setIsExpanded(false);
+    }
+  }, [isBlockCompleted]);
 
   if (tasks.length === 0) return null;
 
