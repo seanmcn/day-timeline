@@ -14,12 +14,14 @@ export function Header() {
       animate={{ opacity: 1, y: 0 }}
       className="sticky top-0 z-50 bg-[hsl(var(--background)/0.8)] backdrop-blur-xl border-b border-[hsl(var(--border)/0.5)] px-4 py-3"
     >
-      <div className="max-w-2xl mx-auto flex items-center justify-between">
-        <h1 className="font-heading text-xl md:text-2xl font-semibold tracking-tight">
-          Day Timeline
-        </h1>
+      <div className="max-w-7xl mx-auto">
+        {/* Match main content layout structure */}
+        <div className="flex items-center justify-between lg:justify-center lg:gap-6">
+          <h1 className="font-heading text-xl md:text-2xl font-semibold tracking-tight lg:w-80 lg:flex-shrink-0">
+            Day Timeline
+          </h1>
 
-        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 lg:flex-1 lg:max-w-2xl lg:justify-end">
           {isSaving && (
             <span className="text-xs text-[hsl(var(--muted-foreground))] animate-pulse">
               Saving...
@@ -50,6 +52,7 @@ export function Header() {
             >
               <LogOut size={16} />
             </motion.button>
+          </div>
           </div>
         </div>
       </div>

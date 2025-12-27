@@ -96,25 +96,35 @@ function AuthenticatedApp({ userId }: { userId: string }) {
               element={
                 <>
                   <Header />
-                  <main className="max-w-2xl mx-auto px-4 py-6 pb-24">
-                    <DateNavigator
-                      currentDate={currentDate}
-                      onDateChange={handleDateChange}
-                    />
-                    {!dayState?.dayStartAt ? (
-                      <DayStartButton />
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.2 }}
-                        className="space-y-3"
-                      >
-                        <DayMetrics />
-                        <BlockList onEditBlock={handleEditBlock} />
-                        <AddBlockButton onClick={() => setIsAddModalOpen(true)} />
-                      </motion.div>
-                    )}
+                  <main className="max-w-7xl mx-auto px-4 py-6 pb-24">
+                    {/* Two-column layout on desktop */}
+                    <div className="lg:flex lg:gap-6 lg:justify-center">
+                      {/* Sidebar - date & metrics */}
+                      <div className="lg:w-80 lg:flex-shrink-0">
+                        <DateNavigator
+                          currentDate={currentDate}
+                          onDateChange={handleDateChange}
+                        />
+                        {dayState?.dayStartAt && <DayMetrics />}
+                      </div>
+
+                      {/* Main content - blocks */}
+                      <div className="flex-1 lg:max-w-2xl">
+                        {!dayState?.dayStartAt ? (
+                          <DayStartButton />
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                            className="space-y-3"
+                          >
+                            <BlockList onEditBlock={handleEditBlock} />
+                            <AddBlockButton onClick={() => setIsAddModalOpen(true)} />
+                          </motion.div>
+                        )}
+                      </div>
+                    </div>
                   </main>
                 </>
               }
