@@ -17,6 +17,21 @@
       }
     },
     {
+      "label": "Sandbox: Reset (Delete & Restart)",
+      "type": "shell",
+      "command": "npx ampx sandbox delete -y && npx ampx sandbox",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "dev"
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
       "label": "Frontend: Start",
       "type": "shell",
       "command": "npm run dev:frontend",
