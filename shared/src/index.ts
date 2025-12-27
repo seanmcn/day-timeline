@@ -408,12 +408,41 @@ export function calculateDayMetrics(state: DayState): DayMetrics {
     plannedBedtime = new Date(bedtimeMs).toISOString();
   }
 
-  // Calculate forecast bedtime (now + remainingPlanned)
+  // Calculate forecast bedtime based on projected end of last block
   let forecastBedtime: string | null = null;
   if (state.dayStartAt) {
-    const remainingMinutes = totalPlannedMinutes - totalActualMinutes;
-    const forecastMs = Date.now() + remainingMinutes * 60000;
-    forecastBedtime = new Date(forecastMs).toISOString();
+    const now = new Date();
+    const projectedEnd = new Date(state.dayStartAt);
+
+    for (const block of state.blocks) {
+      if (block.completed) {
+        // Completed blocks: advance to actual end time if there were sessions
+        // If completed instantly (no sessions), don't advance - user saved that time
+        const lastSession = block.sessions[block.sessions.length - 1];
+        if (lastSession?.endedAt) {
+          const endedAt = new Date(lastSession.endedAt);
+          if (endedAt > projectedEnd) {
+            projectedEnd.setTime(endedAt.getTime());
+          }
+        }
+      } else if (block.sessions.length > 0) {
+        // Started but not completed: jump to actual start if behind, add elapsed + remaining estimate
+        const startedAt = new Date(block.sessions[0].startedAt);
+        if (projectedEnd < startedAt) {
+          projectedEnd.setTime(startedAt.getTime());
+        }
+        // Add full estimate (actual elapsed will continue to tick)
+        projectedEnd.setMinutes(projectedEnd.getMinutes() + getBlockEffectiveEstimate(block));
+      } else {
+        // Not started: jump to now if behind, add full estimate
+        if (projectedEnd < now) {
+          projectedEnd.setTime(now.getTime());
+        }
+        projectedEnd.setMinutes(projectedEnd.getMinutes() + getBlockEffectiveEstimate(block));
+      }
+    }
+
+    forecastBedtime = projectedEnd.toISOString();
   }
 
   return {

@@ -520,11 +520,12 @@ export const useDayStore = create<DayStore>((set, get) => ({
   },
 }));
 
-// Set up interval to recalculate metrics (for active sessions)
+// Set up interval to recalculate metrics (for forecast updates and active sessions)
 if (typeof window !== 'undefined') {
   setInterval(() => {
     const store = useDayStore.getState();
-    if (store.metrics?.currentBlockId) {
+    // Recalculate if day has started (for forecast bedtime) or has active session
+    if (store.dayState?.dayStartAt) {
       store.recalculateMetrics();
     }
   }, 1000);

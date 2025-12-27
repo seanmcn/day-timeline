@@ -104,18 +104,26 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
 
     for (const b of previousBlocks) {
       if (b.completed) {
-        const actual = calculateBlockActualMinutes(b);
-        cumulativePlanned.setMinutes(cumulativePlanned.getMinutes() + actual);
-        cumulativeProjected.setMinutes(cumulativeProjected.getMinutes() + actual);
+        // Planned: always add estimate (the original schedule)
+        cumulativePlanned.setMinutes(cumulativePlanned.getMinutes() + b.estimateMinutes);
+        // Projected: advance to actual end time if the block took time
+        // If completed instantly (no sessions), don't advance - user is ahead
+        const lastSession = b.sessions[b.sessions.length - 1];
+        if (lastSession?.endedAt) {
+          const endedAt = new Date(lastSession.endedAt);
+          if (endedAt > cumulativeProjected) {
+            cumulativeProjected = new Date(endedAt);
+          }
+        }
       } else if (b.sessions.length > 0) {
-        // Started but not completed - use actual start time and current elapsed time
+        // Started but not completed - use actual start time + estimate to project end
         const startedAt = new Date(b.sessions[0].startedAt);
         cumulativePlanned.setMinutes(cumulativePlanned.getMinutes() + b.estimateMinutes);
         // Jump to when this block actually started if we're behind
         if (cumulativeProjected < startedAt) {
           cumulativeProjected = new Date(startedAt);
         }
-        cumulativeProjected.setMinutes(cumulativeProjected.getMinutes() + calculateBlockActualMinutes(b));
+        cumulativeProjected.setMinutes(cumulativeProjected.getMinutes() + b.estimateMinutes);
       } else {
         // Not started - use estimate for planned
         cumulativePlanned.setMinutes(cumulativePlanned.getMinutes() + b.estimateMinutes);
@@ -138,7 +146,7 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
 
     const projectedTime = cumulativeProjected.toISOString();
     const delayMs = cumulativeProjected.getTime() - cumulativePlanned.getTime();
-    const delayMinutes = Math.max(0, Math.floor(delayMs / 60000));
+    const delayMinutes = Math.floor(delayMs / 60000);
 
     return { projectedTime, delayMinutes };
   })();
@@ -246,9 +254,9 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
                   {projectedTime && (
                     <div className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
                       {formatTime(projectedTime)}
-                      {delayMinutes > 5 && (
-                        <span className="ml-2 text-xs text-orange-400">
-                          +{formatDuration(delayMinutes, false)} behind
+                      {Math.abs(delayMinutes) > 5 && (
+                        <span className={`ml-2 text-xs ${delayMinutes > 0 ? 'text-orange-400' : 'text-green-400'}`}>
+                          {delayMinutes > 0 ? '+' : '-'}{formatDuration(Math.abs(delayMinutes), false)} {delayMinutes > 0 ? 'behind' : 'ahead'}
                         </span>
                       )}
                     </div>
