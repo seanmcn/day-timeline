@@ -14,7 +14,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { useDayStore } from '@/store/dayStore';
-import { BlockItem } from './BlockItem';
+import { BlockItem } from './BlockItem/index';
 
 export function BlockList() {
   const { dayState, reorderBlocks } = useDayStore();

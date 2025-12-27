@@ -65,3 +65,14 @@ select {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
 }
+
+/* Swipe action styles */
+.swipe-container {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Prevent text selection during swipe on mobile */
+.swipe-content {
+  touch-action: pan-y;
+}

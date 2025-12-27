@@ -7,24 +7,44 @@ export function formatTime(isoString: string): string {
   });
 }
 
-export function formatDuration(minutes: number): string {
-  const hours = Math.floor(Math.abs(minutes) / 60);
-  const mins = Math.round(Math.abs(minutes) % 60);
+export function formatDuration(minutes: number, includeSeconds = true): string {
+  const totalSeconds = Math.floor(Math.abs(minutes) * 60);
+  const hours = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
 
-  if (hours === 0) {
-    return `${mins}m`;
+  const parts: string[] = [];
+
+  if (hours > 0) {
+    parts.push(`${hours}h`);
   }
 
-  if (mins === 0) {
-    return `${hours}h`;
+  if (mins > 0 || hours > 0) {
+    parts.push(`${mins}m`);
   }
 
-  return `${hours}h ${mins}m`;
+  if (includeSeconds && (secs > 0 || parts.length === 0)) {
+    parts.push(`${secs}s`);
+  }
+
+  // Fallback for 0 duration without seconds
+  if (parts.length === 0) {
+    return '0m';
+  }
+
+  return parts.join(' ');
 }
 
 export function formatDelta(minutes: number): string {
   const sign = minutes >= 0 ? '+' : '-';
-  return `${sign}${formatDuration(Math.abs(minutes))}`;
+  return `${sign}${formatDuration(Math.abs(minutes), false)}`;
+}
+
+export function formatLiveTimer(minutes: number): string {
+  const totalSeconds = Math.floor(minutes * 60);
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
 export function getTimeInputValue(isoString: string): string {
