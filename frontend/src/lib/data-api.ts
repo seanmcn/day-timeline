@@ -5,6 +5,10 @@ import { authService } from './auth-service';
 
 const client = generateClient<Schema>();
 
+export type DayStateSubscription = {
+  unsubscribe: () => void;
+};
+
 export const dataApi = {
   /**
    * Get the day state for a specific date.
@@ -279,6 +283,52 @@ export const dataApi = {
       categories: parsedCategories as Category[],
       createdAt: result.createdAt,
       updatedAt: result.updatedAt,
+    };
+  },
+
+  /**
+   * Subscribe to DayState updates for a specific date.
+   * Used for real-time sync across tabs/devices.
+   */
+  subscribeToDayStateUpdates(
+    date: string,
+    onUpdate: (state: DayState) => void,
+    onError?: (error: Error) => void
+  ): DayStateSubscription {
+    const subscription = client.models.DayState.onUpdate({
+      filter: { date: { eq: date } },
+    }).subscribe({
+      next: async (data) => {
+        try {
+          const user = await authService.getCurrentUser();
+          if (!user) return;
+
+          const blocks = typeof data.blocks === 'string'
+            ? JSON.parse(data.blocks)
+            : (data.blocks ?? []);
+
+          const dayState: DayState = {
+            version: 1 as const,
+            date: data.date,
+            userId: user.id,
+            dayStartAt: data.dayStartAt ?? null,
+            blocks: blocks as Block[],
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+          };
+
+          onUpdate(dayState);
+        } catch (err) {
+          onError?.(err instanceof Error ? err : new Error('Subscription parse error'));
+        }
+      },
+      error: (error) => {
+        onError?.(error instanceof Error ? error : new Error('Subscription error'));
+      },
+    });
+
+    return {
+      unsubscribe: () => subscription.unsubscribe(),
     };
   },
 };

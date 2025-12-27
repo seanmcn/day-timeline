@@ -7,6 +7,7 @@ import { type Block, getTodayKey } from '@day-timeline/shared';
 import { useDayStore } from '@/store/dayStore';
 import { useTemplateStore } from '@/store/templateStore';
 import { useCategoryStore } from '@/store/categoryStore';
+import { useSubscription } from '@/hooks/useSubscription';
 import { Header } from '@/components/Header';
 import { DateNavigator } from '@/components/DateNavigator';
 import { DayStartButton } from '@/components/DayStartButton';
@@ -16,6 +17,7 @@ import { AddBlockButton } from '@/components/AddBlockButton';
 import { AddBlockModal, EditBlockModal } from '@/components/modals';
 import { CompletedBlocksSidebar } from '@/components/CompletedBlocksSidebar';
 import { CompletedBlocksToggle } from '@/components/CompletedBlocksToggle';
+import { SyncNotification } from '@/components/SyncNotification';
 import { SettingsPage } from '@/components/settings/SettingsPage';
 
 const SHOW_COMPLETED_KEY = 'day-timeline-show-completed-in-list';
@@ -29,7 +31,7 @@ export default function App() {
 }
 
 function AuthenticatedApp({ userId }: { userId: string }) {
-  const { dayState, isLoading, error, loadDay, addBlock, updateBlock } = useDayStore();
+  const { dayState, isLoading, error, loadDay, addBlock, updateBlock, setIsEditing } = useDayStore();
   const { loadTemplates } = useTemplateStore();
   const [currentDate, setCurrentDate] = useState(getTodayKey());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -52,6 +54,14 @@ function AuthenticatedApp({ userId }: { userId: string }) {
       return next;
     });
   };
+
+  // Subscribe to real-time updates
+  useSubscription(currentDate, !!userId);
+
+  // Sync modal state to store for smart auto-refresh
+  useEffect(() => {
+    setIsEditing(isAddModalOpen || editingBlock !== null);
+  }, [isAddModalOpen, editingBlock, setIsEditing]);
 
   useEffect(() => {
     if (userId) {
@@ -110,6 +120,9 @@ function AuthenticatedApp({ userId }: { userId: string }) {
       <div className="min-h-screen bg-[hsl(var(--background))]">
         {/* Background gradient */}
         <div className="fixed inset-0 bg-gradient-to-br from-[hsl(var(--primary)/0.05)] via-transparent to-[hsl(var(--accent)/0.05)] pointer-events-none" />
+
+        {/* Sync notification */}
+        <SyncNotification />
 
         <div className="relative">
           <Routes>

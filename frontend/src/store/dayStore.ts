@@ -17,6 +17,11 @@ interface DayStore {
   isSaving: boolean;
   error: string | null;
 
+  // Sync state
+  remoteChangeAvailable: boolean;
+  lastKnownUpdatedAt: string | null;
+  isEditing: boolean;
+
   // Actions
   loadDay: (date: string) => Promise<void>;
   saveDay: () => Promise<void>;
@@ -46,6 +51,12 @@ interface DayStore {
   updateTaskInBlock: (blockId: string, taskId: string, updates: Partial<Task>) => void;
   removeTaskFromBlock: (blockId: string, taskId: string) => void;
 
+  // Sync actions
+  handleRemoteUpdate: (remoteState: DayState) => void;
+  refreshFromRemote: () => Promise<void>;
+  dismissRemoteChange: () => void;
+  setIsEditing: (editing: boolean) => void;
+
   // Internal
   recalculateMetrics: () => void;
 }
@@ -56,13 +67,21 @@ export const useDayStore = create<DayStore>((set, get) => ({
   isLoading: false,
   isSaving: false,
   error: null,
+  remoteChangeAvailable: false,
+  lastKnownUpdatedAt: null,
+  isEditing: false,
 
   loadDay: async (date: string) => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: true, error: null, remoteChangeAvailable: false });
     try {
       const state = await dataApi.getState(date);
       const metrics = calculateDayMetrics(state);
-      set({ dayState: state, metrics, isLoading: false });
+      set({
+        dayState: state,
+        metrics,
+        isLoading: false,
+        lastKnownUpdatedAt: state.updatedAt ?? null,
+      });
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : 'Failed to load day',
@@ -77,8 +96,11 @@ export const useDayStore = create<DayStore>((set, get) => ({
 
     set({ isSaving: true });
     try {
-      await dataApi.putState(dayState.date, dayState);
-      set({ isSaving: false });
+      const savedState = await dataApi.putState(dayState.date, dayState);
+      set({
+        isSaving: false,
+        lastKnownUpdatedAt: savedState.updatedAt ?? null,
+      });
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : 'Failed to save',
@@ -509,6 +531,45 @@ export const useDayStore = create<DayStore>((set, get) => ({
       return { dayState: newState, metrics };
     });
     get().saveDay();
+  },
+
+  handleRemoteUpdate: (remoteState: DayState) => {
+    const { lastKnownUpdatedAt, dayState, isEditing } = get();
+
+    // Ignore if it's for a different date
+    if (dayState && remoteState.date !== dayState.date) return;
+
+    // Ignore self-triggered updates (same updatedAt as our last save)
+    if (remoteState.updatedAt === lastKnownUpdatedAt) return;
+
+    if (isEditing) {
+      // User is busy editing - show notification
+      set({ remoteChangeAvailable: true });
+    } else {
+      // User is idle - apply remote state directly (no loading flash)
+      const metrics = calculateDayMetrics(remoteState);
+      set({
+        dayState: remoteState,
+        metrics,
+        lastKnownUpdatedAt: remoteState.updatedAt ?? null,
+      });
+    }
+  },
+
+  refreshFromRemote: async () => {
+    const { dayState } = get();
+    if (!dayState) return;
+
+    set({ remoteChangeAvailable: false });
+    await get().loadDay(dayState.date);
+  },
+
+  dismissRemoteChange: () => {
+    set({ remoteChangeAvailable: false });
+  },
+
+  setIsEditing: (editing: boolean) => {
+    set({ isEditing: editing });
   },
 
   recalculateMetrics: () => {
