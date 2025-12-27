@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Timer } from 'lucide-react';
+import { Timer, Play, Pause } from 'lucide-react';
 import { formatDuration } from '@/lib/time';
 
 interface LiveTimerProps {
@@ -8,6 +8,7 @@ interface LiveTimerProps {
   isPaused: boolean;
   actualMinutes: number;
   estimateMinutes: number;
+  onToggle: () => void;
 }
 
 function formatTimer(totalMinutes: number): string {
@@ -21,7 +22,7 @@ function formatTimer(totalMinutes: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-export function LiveTimer({ isRunning, isPaused, actualMinutes, estimateMinutes }: LiveTimerProps) {
+export function LiveTimer({ isRunning, isPaused, actualMinutes, estimateMinutes, onToggle }: LiveTimerProps) {
   const [, forceUpdate] = useState({});
 
   useEffect(() => {
@@ -53,20 +54,34 @@ export function LiveTimer({ isRunning, isPaused, actualMinutes, estimateMinutes 
             {isPaused ? 'Paused' : 'Elapsed'}
           </span>
         </div>
-        <motion.span
-          key={Math.floor(actualMinutes * 60)}
-          initial={{ opacity: 0.5 }}
-          animate={{ opacity: 1 }}
-          className={`font-mono text-lg font-semibold ${
-            isOvertime
-              ? 'text-[hsl(var(--destructive))]'
-              : isPaused
-                ? 'text-[hsl(var(--foreground))]'
-                : 'text-[hsl(var(--primary))]'
-          }`}
-        >
-          {formatTimer(actualMinutes)}
-        </motion.span>
+        <div className="flex items-center gap-2">
+          <motion.span
+            key={Math.floor(actualMinutes * 60)}
+            initial={{ opacity: 0.5 }}
+            animate={{ opacity: 1 }}
+            className={`font-mono text-lg font-semibold ${
+              isOvertime
+                ? 'text-[hsl(var(--destructive))]'
+                : isPaused
+                  ? 'text-[hsl(var(--foreground))]'
+                  : 'text-[hsl(var(--primary))]'
+            }`}
+          >
+            {formatTimer(actualMinutes)}
+          </motion.span>
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={onToggle}
+            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+              isRunning
+                ? 'bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))]'
+                : 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+            }`}
+            aria-label={isRunning ? 'Pause' : 'Resume'}
+          >
+            {isRunning ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
+          </motion.button>
+        </div>
       </div>
 
       {/* Progress bar */}

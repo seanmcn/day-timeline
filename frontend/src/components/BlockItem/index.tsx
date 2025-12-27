@@ -8,7 +8,6 @@ import {
   Copy,
   Trash2,
   Play,
-  Pause,
   CheckCircle2,
 } from 'lucide-react';
 import { type Block, calculateBlockActualMinutes } from '@day-timeline/shared';
@@ -236,35 +235,17 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
                   <div />
                 )}
 
-                <div className="flex items-center gap-2">
-                  {!block.completed && (
-                    <>
-                      <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() =>
-                          hasActiveSession
-                            ? stopSession(block.id)
-                            : startSession(block.id)
-                        }
-                        className={`min-w-[44px] min-h-[44px] px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all text-sm font-medium ${
-                          hasActiveSession
-                            ? 'bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))]'
-                            : 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] glow-primary'
-                        }`}
-                        aria-label={hasActiveSession ? 'Pause' : isPaused ? 'Resume' : 'Start'}
-                      >
-                        {hasActiveSession ? (
-                          <Pause size={18} />
-                        ) : (
-                          <Play size={18} className="ml-0.5" />
-                        )}
-                        <span className="hidden sm:inline">
-                          {hasActiveSession ? 'Pause' : isPaused ? 'Resume' : 'Start'}
-                        </span>
-                      </motion.button>
-                    </>
-                  )}
-                </div>
+                {/* Only show Start button when block hasn't been started yet */}
+                {!block.completed && !hasBeenStarted && (
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => startSession(block.id)}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] glow-primary"
+                    aria-label="Start"
+                  >
+                    <Play size={18} className="ml-0.5" />
+                  </motion.button>
+                )}
               </div>
 
               {/* Live Timer */}
@@ -273,6 +254,7 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
                 isPaused={isPaused}
                 actualMinutes={actualMinutes}
                 estimateMinutes={block.estimateMinutes}
+                onToggle={() => hasActiveSession ? stopSession(block.id) : startSession(block.id)}
               />
 
               {/* Sub Tasks */}
