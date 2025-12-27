@@ -147,7 +147,7 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
         disabled={false}
       >
         <div
-          className={`timeline-block glass-card-hover p-4 ${blockState}`}
+          className={`timeline-block glass-card-hover p-4 group ${blockState}`}
           style={{
             borderLeftWidth: '4px',
             borderLeftColor: `hsl(${categoryColor})`,
@@ -216,7 +216,7 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                   <motion.button
                     whileTap={{ scale: 0.9 }}
                     onClick={handleEdit}
