@@ -71,6 +71,16 @@
       "type": "shell",
       "command": "npm run typecheck",
       "problemMatcher": []
+    },
+    {
+      "label": "Kill Orphan Processes",
+      "type": "shell",
+      "command": "pkill -f 'ampx sandbox' || true",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "close": true
+      }
     }
   ]
 }
