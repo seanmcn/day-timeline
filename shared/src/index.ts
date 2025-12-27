@@ -1,5 +1,83 @@
-// Block category for organizing and color-coding
-export type BlockCategory = 'work' | 'movement' | 'routine' | 'leisure';
+// Block category - now dynamic, stored as string ID reference
+export type BlockCategory = string;
+
+// User-defined category
+export interface Category {
+  id: string;
+  name: string;
+  color: string; // HSL value like "174 72% 56%"
+  icon?: string; // Lucide icon name like "briefcase"
+  isDeleted: boolean;
+  order: number;
+}
+
+// Default categories for new users
+export const DEFAULT_CATEGORIES: Omit<Category, 'order'>[] = [
+  { id: 'work', name: 'Work', color: '210 80% 50%', icon: 'briefcase', isDeleted: false },
+  { id: 'routine', name: 'Routine', color: '38 92% 50%', icon: 'coffee', isDeleted: false },
+  { id: 'leisure', name: 'Leisure', color: '270 60% 50%', icon: 'gamepad-2', isDeleted: false },
+];
+
+// Icon options for category picker (Lucide icon names)
+export const CATEGORY_ICONS = [
+  'briefcase',
+  'coffee',
+  'gamepad-2',
+  'book',
+  'dumbbell',
+  'heart',
+  'music',
+  'code',
+  'palette',
+  'utensils',
+  'bed',
+  'sun',
+  'moon',
+  'car',
+  'plane',
+  'home',
+  'users',
+  'phone',
+  'mail',
+  'calendar',
+  'clock',
+  'target',
+  'zap',
+  'star',
+];
+
+// Color palette for category picker
+export const CATEGORY_COLORS = [
+  { name: 'Blue', value: '210 80% 50%' },
+  { name: 'Cyan', value: '174 72% 56%' },
+  { name: 'Teal', value: '174 72% 40%' },
+  { name: 'Green', value: '142 76% 36%' },
+  { name: 'Orange', value: '38 92% 50%' },
+  { name: 'Red', value: '0 72% 51%' },
+  { name: 'Pink', value: '330 70% 50%' },
+  { name: 'Purple', value: '270 60% 50%' },
+];
+
+// Collection of user's categories stored in DB
+export interface UserCategories {
+  version: 1;
+  userId: string;
+  categories: Category[];
+  createdAt: string; // ISO 8601 UTC
+  updatedAt: string; // ISO 8601 UTC
+}
+
+// Initialize user categories with defaults
+export function createDefaultUserCategories(userId: string): UserCategories {
+  const now = new Date().toISOString();
+  return {
+    version: 1,
+    userId,
+    categories: DEFAULT_CATEGORIES.map((c, i) => ({ ...c, order: i })),
+    createdAt: now,
+    updatedAt: now,
+  };
+}
 
 // Task within a template (no completion state)
 export interface TaskTemplate {

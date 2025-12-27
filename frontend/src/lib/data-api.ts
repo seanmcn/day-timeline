@@ -1,6 +1,6 @@
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
-import type { DayState, Block, UserTemplates, BlockTemplate } from '@day-timeline/shared';
+import type { DayState, Block, UserTemplates, BlockTemplate, UserCategories, Category } from '@day-timeline/shared';
 import { authService } from './auth-service';
 
 const client = generateClient<Schema>();
@@ -196,6 +196,87 @@ export const dataApi = {
       version: 1 as const,
       userId: user.id,
       templates: parsedTemplates as BlockTemplate[],
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
+    };
+  },
+
+  /**
+   * Get user's categories.
+   * Creates default categories if none exist.
+   */
+  async getCategories(): Promise<UserCategories> {
+    const user = await authService.getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, errors } = await client.models.UserCategories.list();
+
+    if (errors?.length) {
+      throw new Error(errors[0].message);
+    }
+
+    // Should be at most one record per owner
+    const record = data[0];
+
+    if (record) {
+      const categories = typeof record.categories === 'string'
+        ? JSON.parse(record.categories)
+        : (record.categories ?? []);
+      return {
+        version: 1 as const,
+        userId: user.id,
+        categories: categories as Category[],
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt,
+      };
+    }
+
+    // Create default categories for new user
+    const { createDefaultUserCategories } = await import('@day-timeline/shared');
+    const defaultCategories = createDefaultUserCategories(user.id);
+    return this.putCategories(defaultCategories);
+  },
+
+  /**
+   * Save user's categories.
+   */
+  async putCategories(categories: UserCategories): Promise<UserCategories> {
+    const user = await authService.getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Check if record exists
+    const { data: existing } = await client.models.UserCategories.list();
+    const record = existing[0];
+
+    let result;
+    if (record) {
+      const { data, errors } = await client.models.UserCategories.update({
+        id: record.id,
+        version: 1,
+        categories: JSON.stringify(categories.categories),
+      });
+      if (errors?.length) throw new Error(errors[0].message);
+      result = data;
+    } else {
+      const { data, errors } = await client.models.UserCategories.create({
+        version: 1,
+        categories: JSON.stringify(categories.categories),
+      });
+      if (errors?.length) throw new Error(errors[0].message);
+      result = data;
+    }
+
+    if (!result) {
+      throw new Error('Failed to save categories');
+    }
+
+    const parsedCategories = typeof result.categories === 'string'
+      ? JSON.parse(result.categories)
+      : (result.categories ?? []);
+    return {
+      version: 1 as const,
+      userId: user.id,
+      categories: parsedCategories as Category[],
       createdAt: result.createdAt,
       updatedAt: result.updatedAt,
     };

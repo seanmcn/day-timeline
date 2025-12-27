@@ -17,6 +17,13 @@ const schema = a.schema({
       templates: a.json(), // BlockTemplate[] stored as JSON
     })
     .authorization((allow) => [allow.owner()]),
+
+  UserCategories: a
+    .model({
+      version: a.integer().default(1),
+      categories: a.json(), // Category[] stored as JSON
+    })
+    .authorization((allow) => [allow.owner()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;

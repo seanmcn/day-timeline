@@ -2,33 +2,35 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Plus } from 'lucide-react';
 import { useTemplateStore } from '@/store/templateStore';
+import { useCategoryStore } from '@/store/categoryStore';
 import { TemplateEditor } from './TemplateEditor';
-import type { BlockTemplate, BlockCategory } from '@day-timeline/shared';
+import type { BlockTemplate } from '@day-timeline/shared';
 
 export function TemplateList() {
   const { templates, addTemplate, updateTemplate, deleteTemplate } = useTemplateStore();
+  const allCategories = useCategoryStore((state) => state.categories);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const categories = allCategories.filter((c) => !c.isDeleted).sort((a, b) => a.order - b.order);
   const sortedTemplates = [...templates].sort((a, b) => a.order - b.order);
+  const defaultCategory = categories[0]?.id ?? 'routine';
+
+  const getCategoryColor = (id: string) => {
+    const cat = allCategories.find((c) => c.id === id);
+    return cat?.color ?? '210 15% 50%';
+  };
 
   const handleAdd = () => {
     const newTemplate: Omit<BlockTemplate, 'id' | 'order'> = {
       name: 'New Block',
       defaultMinutes: 60,
-      category: 'routine' as BlockCategory,
+      category: defaultCategory,
       tasks: [],
       useTaskEstimates: false,
       isDefault: false,
       isHidden: false,
     };
     addTemplate(newTemplate);
-  };
-
-  const categoryColors: Record<BlockCategory, string> = {
-    work: 'hsl(var(--primary))',
-    movement: 'hsl(var(--success))',
-    leisure: 'hsl(var(--warning))',
-    routine: 'hsl(var(--accent))',
   };
 
   return (
@@ -61,7 +63,7 @@ export function TemplateList() {
                 className={`glass-card-hover relative overflow-hidden ${template.isHidden ? 'opacity-50' : ''}`}
                 style={{
                   borderLeftWidth: '4px',
-                  borderLeftColor: categoryColors[template.category],
+                  borderLeftColor: `hsl(${getCategoryColor(template.category)})`,
                 }}
               >
                 <button

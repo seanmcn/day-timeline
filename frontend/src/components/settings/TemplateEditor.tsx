@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Plus } from 'lucide-react';
 import { useTemplateStore } from '@/store/templateStore';
+import { useCategoryStore } from '@/store/categoryStore';
 import type { BlockTemplate, BlockCategory, TaskTemplate } from '@day-timeline/shared';
 import { calculateBlockEstimateFromTasks } from '@day-timeline/shared';
 
@@ -14,6 +15,8 @@ interface TemplateEditorProps {
 
 export function TemplateEditor({ template, onSave, onCancel, onDelete }: TemplateEditorProps) {
   const { addTaskToTemplate, updateTaskInTemplate, removeTaskFromTemplate } = useTemplateStore();
+  const allCategories = useCategoryStore((state) => state.categories);
+  const categories = allCategories.filter((c) => !c.isDeleted).sort((a, b) => a.order - b.order);
 
   const [name, setName] = useState(template.name);
   const [defaultMinutes, setDefaultMinutes] = useState(template.defaultMinutes);
@@ -51,13 +54,6 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
   const handleUpdateTask = (taskId: string, updates: Partial<TaskTemplate>) => {
     updateTaskInTemplate(template.id, taskId, updates);
   };
-
-  const categoryOptions: { value: BlockCategory; label: string; color: string }[] = [
-    { value: 'work', label: 'Work', color: 'bg-[hsl(var(--primary))]' },
-    { value: 'routine', label: 'Routine', color: 'bg-[hsl(var(--accent))]' },
-    { value: 'movement', label: 'Movement', color: 'bg-[hsl(var(--success))]' },
-    { value: 'leisure', label: 'Leisure', color: 'bg-[hsl(var(--warning))]' },
-  ];
 
   const taskSum = calculateBlockEstimateFromTasks(template.tasks);
 
@@ -105,18 +101,21 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
       <div className="mb-4">
         <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1">Category</label>
         <div className="flex gap-2 flex-wrap">
-          {categoryOptions.map((opt) => (
+          {categories.map((cat) => (
             <button
-              key={opt.value}
-              onClick={() => setCategory(opt.value)}
+              key={cat.id}
+              onClick={() => setCategory(cat.id)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors ${
-                category === opt.value
+                category === cat.id
                   ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)]'
                   : 'border-[hsl(var(--border))] hover:border-[hsl(var(--muted-foreground))]'
               }`}
             >
-              <span className={`w-3 h-3 rounded-full ${opt.color}`} />
-              <span className="text-sm">{opt.label}</span>
+              <span
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: `hsl(${cat.color})` }}
+              />
+              <span className="text-sm">{cat.name}</span>
             </button>
           ))}
         </div>

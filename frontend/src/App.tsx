@@ -6,6 +6,7 @@ import '@aws-amplify/ui-react/styles.css';
 import { type Block, getTodayKey } from '@day-timeline/shared';
 import { useDayStore } from '@/store/dayStore';
 import { useTemplateStore } from '@/store/templateStore';
+import { useCategoryStore } from '@/store/categoryStore';
 import { Header } from '@/components/Header';
 import { DateNavigator } from '@/components/DateNavigator';
 import { DayStartButton } from '@/components/DayStartButton';
@@ -33,9 +34,16 @@ function AuthenticatedApp({ userId }: { userId: string }) {
   useEffect(() => {
     if (userId) {
       loadDay(currentDate);
-      loadTemplates();
     }
-  }, [userId, currentDate, loadDay, loadTemplates]);
+  }, [userId, currentDate, loadDay]);
+
+  // Load templates and categories once on startup
+  useEffect(() => {
+    if (userId) {
+      loadTemplates();
+      useCategoryStore.getState().loadCategories();
+    }
+  }, [userId, loadTemplates]);
 
   const handleDateChange = (date: string) => {
     setCurrentDate(date);

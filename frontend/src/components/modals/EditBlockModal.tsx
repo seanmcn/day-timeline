@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Plus, Trash2 } from 'lucide-react';
 import { type Block, type BlockCategory, generateId } from '@day-timeline/shared';
 import { Dialog } from '@/components/ui/Dialog';
+import { useCategoryStore } from '@/store/categoryStore';
 
 interface EditBlockModalProps {
   block: Block | null;
@@ -10,14 +11,9 @@ interface EditBlockModalProps {
   onSave: (blockId: string, updates: Partial<Block>) => void;
 }
 
-const CATEGORIES: { value: BlockCategory; label: string }[] = [
-  { value: 'work', label: 'Work' },
-  { value: 'movement', label: 'Movement' },
-  { value: 'routine', label: 'Routine' },
-  { value: 'leisure', label: 'Leisure' },
-];
-
 export function EditBlockModal({ block, onClose, onSave }: EditBlockModalProps) {
+  const allCategories = useCategoryStore((state) => state.categories);
+  const categories = allCategories.filter((c) => !c.isDeleted).sort((a, b) => a.order - b.order);
   const [label, setLabel] = useState('');
   const [category, setCategory] = useState<BlockCategory>('work');
   const [estimateMinutes, setEstimateMinutes] = useState(60);
@@ -104,17 +100,27 @@ export function EditBlockModal({ block, onClose, onSave }: EditBlockModalProps) 
           <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1">
             Category
           </label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value as BlockCategory)}
-            className="w-full bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)]"
-          >
-            {CATEGORIES.map((cat) => (
-              <option key={cat.value} value={cat.value}>
-                {cat.label}
-              </option>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <motion.button
+                key={cat.id}
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setCategory(cat.id)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors ${
+                  category === cat.id
+                    ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)]'
+                    : 'border-[hsl(var(--border))] hover:border-[hsl(var(--muted-foreground))]'
+                }`}
+              >
+                <span
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: `hsl(${cat.color})` }}
+                />
+                <span className="text-sm">{cat.name}</span>
+              </motion.button>
             ))}
-          </select>
+          </div>
         </div>
 
         {/* Estimate */}

@@ -1,3 +1,4 @@
+import { forwardRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -13,10 +14,12 @@ import {
 } from 'lucide-react';
 import { type Block, calculateBlockActualMinutes } from '@day-timeline/shared';
 import { useDayStore } from '@/store/dayStore';
+import { useCategoryStore } from '@/store/categoryStore';
 import { SwipeableWrapper } from './SwipeableWrapper';
 import { LiveTimer } from './LiveTimer';
 import { TaskList } from '@/components/tasks';
 import { formatTime } from '@/lib/time';
+import { DynamicIcon } from '@/components/ui/DynamicIcon';
 
 interface BlockItemProps {
   block: Block;
@@ -26,28 +29,10 @@ interface BlockItemProps {
   onEdit: (block: Block) => void;
 }
 
-const getCategoryBadgeClass = (category: string) => {
-  switch (category) {
-    case 'work':
-      return 'category-work';
-    case 'movement':
-      return 'category-movement';
-    case 'leisure':
-      return 'category-leisure';
-    case 'routine':
-      return 'category-routine';
-    default:
-      return 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]';
-  }
-};
-
-export function BlockItem({
-  block,
-  index,
-  dayStartAt,
-  previousBlocks,
-  onEdit,
-}: BlockItemProps) {
+export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function BlockItem(
+  { block, index, dayStartAt, previousBlocks, onEdit },
+  forwardedRef
+) {
   const {
     duplicateBlock,
     deleteBlock,
@@ -59,6 +44,10 @@ export function BlockItem({
     metrics,
   } = useDayStore();
 
+  const allCategories = useCategoryStore((state) => state.categories);
+  const category = allCategories.find((c) => c.id === block.category);
+  const categoryColor = category?.color ?? '210 15% 50%';
+
   const {
     attributes,
     listeners,
@@ -67,6 +56,19 @@ export function BlockItem({
     transition,
     isDragging,
   } = useSortable({ id: block.id });
+
+  // Merge the forwarded ref with the sortable ref
+  const mergedRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      setNodeRef(node);
+      if (typeof forwardedRef === 'function') {
+        forwardedRef(node);
+      } else if (forwardedRef) {
+        forwardedRef.current = node;
+      }
+    },
+    [setNodeRef, forwardedRef]
+  );
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -102,7 +104,7 @@ export function BlockItem({
 
   return (
     <motion.div
-      ref={setNodeRef}
+      ref={mergedRef}
       style={style}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -171,11 +173,14 @@ export function BlockItem({
                       </span>
                     )}
                     <span
-                      className={`category-badge ${getCategoryBadgeClass(
-                        block.category
-                      )}`}
+                      className="category-badge flex items-center gap-1.5"
+                      style={{
+                        backgroundColor: `hsl(${categoryColor} / 0.2)`,
+                        color: `hsl(${categoryColor})`,
+                      }}
                     >
-                      {block.category}
+                      <DynamicIcon name={category?.icon ?? 'circle'} size={12} />
+                      {category?.name ?? block.category}
                     </span>
                   </div>
                 </div>
@@ -293,4 +298,4 @@ export function BlockItem({
       </SwipeableWrapper>
     </motion.div>
   );
-}
+});
