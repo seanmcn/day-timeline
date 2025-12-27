@@ -2,31 +2,9 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Docker: Ensure Running",
+      "label": "Sandbox: Start",
       "type": "shell",
-      "command": "docker compose up -d && sleep 3 && (docker exec day-timeline-localstack awslocal s3 ls s3://day-timeline-storage 2>/dev/null || docker exec day-timeline-localstack awslocal s3 mb s3://day-timeline-storage)",
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "silent",
-        "panel": "shared"
-      }
-    },
-    {
-      "label": "Backend: Deploy",
-      "type": "shell",
-      "command": "npm run deploy",
-      "dependsOn": ["Docker: Ensure Running"],
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      }
-    },
-    {
-      "label": "Backend: Watch",
-      "type": "shell",
-      "command": "npm run dev:backend",
-      "dependsOn": ["Docker: Ensure Running"],
+      "command": "npm run sandbox",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -35,15 +13,13 @@
         "group": "dev"
       },
       "runOptions": {
-        "instanceLimit": 1,
-        "reevaluateOnRerun": true
+        "instanceLimit": 1
       }
     },
     {
       "label": "Frontend: Start",
       "type": "shell",
       "command": "npm run dev:frontend",
-      "dependsOn": ["Docker: Ensure Running"],
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -52,38 +28,34 @@
         "group": "dev"
       },
       "runOptions": {
-        "instanceLimit": 1,
-        "reevaluateOnRerun": true
+        "instanceLimit": 1
       }
     },
     {
       "label": "Dev: Start All",
-      "dependsOn": ["Backend: Watch", "Frontend: Start"],
-      "dependsOrder": "parallel",
+      "type": "shell",
+      "command": "npm run dev",
+      "isBackground": true,
       "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
       "runOptions": {
         "instanceLimit": 1
       }
     },
     {
-      "label": "Docker: Stop LocalStack",
+      "label": "Build: All",
       "type": "shell",
-      "command": "docker compose down",
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "silent",
-        "panel": "shared"
-      }
+      "command": "npm run build",
+      "problemMatcher": []
     },
     {
-      "label": "Data: Reset All",
+      "label": "Typecheck",
       "type": "shell",
-      "command": "docker exec day-timeline-localstack awslocal s3 rm s3://day-timeline-storage --recursive",
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      }
+      "command": "npm run typecheck",
+      "problemMatcher": []
     }
   ]
 }
