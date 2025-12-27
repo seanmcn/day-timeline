@@ -53,7 +53,7 @@ export function CompletedBlocksSidebar({
       </div>
 
       {/* Completed blocks list */}
-      <div className="space-y-2 max-h-64 overflow-y-auto">
+      <div className="space-y-2">
         <AnimatePresence mode="popLayout">
           {blocks.map((block) => {
             const category = allCategories.find((c) => c.id === block.category);
