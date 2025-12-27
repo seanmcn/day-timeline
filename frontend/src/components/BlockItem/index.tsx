@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { type Block, DEFAULT_BLOCKS } from '@day-timeline/shared';
+import { type Block } from '@day-timeline/shared';
 import { useDayStore } from '@/store/dayStore';
 import { SwipeableWrapper } from './SwipeableWrapper';
 import { BlockHeader } from './BlockHeader';
 import { BlockTimeDisplay } from './BlockTimeDisplay';
 import { BlockActions } from './BlockActions';
 import { EditModeOverlay } from './EditModeOverlay';
+import { TaskList } from '@/components/tasks';
 
 interface BlockItemProps {
   block: Block;
@@ -30,6 +31,7 @@ export function BlockItem({
     uncompleteBlock,
     startSession,
     stopSession,
+    toggleTask,
     metrics,
   } = useDayStore();
 
@@ -53,7 +55,6 @@ export function BlockItem({
   const isActive = metrics?.currentBlockId === block.id;
   const hasActiveSession = block.sessions.some((s) => s.endedAt === null);
 
-  const category = DEFAULT_BLOCKS[block.type]?.category || 'routine';
   const categoryColors: Record<string, string> = {
     work: 'border-l-blue-500',
     movement: 'border-l-green-500',
@@ -106,7 +107,7 @@ export function BlockItem({
       >
         <div
           className={`rounded-xl border border-[var(--color-border)]
-                      ${categoryColors[category]} border-l-4
+                      ${categoryColors[block.category]} border-l-4
                       ${isActive ? 'ring-2 ring-[var(--color-accent)]' : ''}
                       ${block.completed ? 'opacity-60' : ''}`}
         >
@@ -175,6 +176,15 @@ export function BlockItem({
                   </button>
                 )}
               </div>
+            )}
+
+            {/* Task list - show when not in edit mode and block has tasks */}
+            {!isEditMode && block.tasks.length > 0 && (
+              <TaskList
+                tasks={block.tasks}
+                blockId={block.id}
+                onToggleTask={(taskId) => toggleTask(block.id, taskId)}
+              />
             )}
           </div>
         </div>
