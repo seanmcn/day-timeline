@@ -40,7 +40,7 @@ volume/
 
 # Amplify
 .amplify/
-amplify_outputs.json
+frontend/public/amplify_outputs.json
 amplify_outputs.d.ts
 amplify/node_modules/
 
