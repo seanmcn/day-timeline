@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import {
   type DayState,
   type Block,
+  type Task,
   type TimeSession,
   type DayMetrics,
   generateId,
@@ -23,6 +24,7 @@ interface DayStore {
   // Day actions
   startDay: (time?: string) => void;
   updateDayStart: (time: string) => void;
+  resetDay: () => Promise<void>;
 
   // Block actions
   reorderBlocks: (activeId: string, overId: string) => void;
@@ -36,6 +38,12 @@ interface DayStore {
   startSession: (blockId: string) => void;
   stopSession: (blockId: string) => void;
   stopAllSessions: () => void;
+
+  // Task actions
+  toggleTask: (blockId: string, taskId: string) => void;
+  addTaskToBlock: (blockId: string, task: Omit<Task, 'id' | 'order' | 'completed'>) => void;
+  updateTaskInBlock: (blockId: string, taskId: string, updates: Partial<Task>) => void;
+  removeTaskFromBlock: (blockId: string, taskId: string) => void;
 
   // Internal
   recalculateMetrics: () => void;
@@ -107,6 +115,22 @@ export const useDayStore = create<DayStore>((set, get) => ({
     get().saveDay();
   },
 
+  resetDay: async () => {
+    const { dayState } = get();
+    if (!dayState) return;
+
+    set({ isLoading: true, error: null });
+    try {
+      await dataApi.deleteState(dayState.date);
+      await get().loadDay(dayState.date);
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Failed to reset day',
+        isLoading: false,
+      });
+    }
+  },
+
   reorderBlocks: (activeId: string, overId: string) => {
     set((state) => {
       if (!state.dayState) return state;
@@ -169,6 +193,14 @@ export const useDayStore = create<DayStore>((set, get) => ({
         ...original,
         id: generateId(),
         sessions: [],
+        completed: false,
+        // Copy tasks with fresh IDs and reset completion
+        tasks: original.tasks.map((task, i) => ({
+          ...task,
+          id: generateId(),
+          completed: false,
+          order: i,
+        })),
         order: original.order + 0.5,
       };
 
@@ -347,6 +379,107 @@ export const useDayStore = create<DayStore>((set, get) => ({
       const metrics = calculateDayMetrics(newState);
       return { dayState: newState, metrics };
     });
+  },
+
+  toggleTask: (blockId: string, taskId: string) => {
+    set((state) => {
+      if (!state.dayState) return state;
+
+      const blocks = state.dayState.blocks.map((block) => {
+        if (block.id !== blockId) return block;
+        return {
+          ...block,
+          tasks: block.tasks.map((task) =>
+            task.id === taskId ? { ...task, completed: !task.completed } : task
+          ),
+        };
+      });
+
+      const newState = {
+        ...state.dayState,
+        blocks,
+        updatedAt: new Date().toISOString(),
+      };
+      const metrics = calculateDayMetrics(newState);
+      return { dayState: newState, metrics };
+    });
+    get().saveDay();
+  },
+
+  addTaskToBlock: (blockId: string, task: Omit<Task, 'id' | 'order' | 'completed'>) => {
+    set((state) => {
+      if (!state.dayState) return state;
+
+      const blocks = state.dayState.blocks.map((block) => {
+        if (block.id !== blockId) return block;
+        const newTask: Task = {
+          ...task,
+          id: generateId(),
+          order: block.tasks.length,
+          completed: false,
+        };
+        return { ...block, tasks: [...block.tasks, newTask] };
+      });
+
+      const newState = {
+        ...state.dayState,
+        blocks,
+        updatedAt: new Date().toISOString(),
+      };
+      const metrics = calculateDayMetrics(newState);
+      return { dayState: newState, metrics };
+    });
+    get().saveDay();
+  },
+
+  updateTaskInBlock: (blockId: string, taskId: string, updates: Partial<Task>) => {
+    set((state) => {
+      if (!state.dayState) return state;
+
+      const blocks = state.dayState.blocks.map((block) => {
+        if (block.id !== blockId) return block;
+        return {
+          ...block,
+          tasks: block.tasks.map((task) =>
+            task.id === taskId ? { ...task, ...updates } : task
+          ),
+        };
+      });
+
+      const newState = {
+        ...state.dayState,
+        blocks,
+        updatedAt: new Date().toISOString(),
+      };
+      const metrics = calculateDayMetrics(newState);
+      return { dayState: newState, metrics };
+    });
+    get().saveDay();
+  },
+
+  removeTaskFromBlock: (blockId: string, taskId: string) => {
+    set((state) => {
+      if (!state.dayState) return state;
+
+      const blocks = state.dayState.blocks.map((block) => {
+        if (block.id !== blockId) return block;
+        const tasks = block.tasks.filter((task) => task.id !== taskId);
+        // Normalize order
+        tasks.forEach((task, i) => {
+          task.order = i;
+        });
+        return { ...block, tasks };
+      });
+
+      const newState = {
+        ...state.dayState,
+        blocks,
+        updatedAt: new Date().toISOString(),
+      };
+      const metrics = calculateDayMetrics(newState);
+      return { dayState: newState, metrics };
+    });
+    get().saveDay();
   },
 
   recalculateMetrics: () => {

@@ -1,6 +1,6 @@
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
-import type { DayState, Block } from '@day-timeline/shared';
+import type { DayState, Block, UserTemplates, BlockTemplate } from '@day-timeline/shared';
 import { authService } from './auth-service';
 
 const client = generateClient<Schema>();
@@ -42,9 +42,10 @@ export const dataApi = {
       };
     }
 
-    // Create default state if none exists
+    // Create default state if none exists, using user's templates
+    const userTemplates = await this.getTemplates();
     const { createDefaultDayState } = await import('@day-timeline/shared');
-    const defaultState = createDefaultDayState(user.id, date);
+    const defaultState = createDefaultDayState(user.id, date, userTemplates.templates);
     return this.putState(date, defaultState);
   },
 
@@ -100,6 +101,101 @@ export const dataApi = {
       userId: user.id, // Get from auth context
       dayStartAt: result.dayStartAt ?? null,
       blocks: blocks as Block[],
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
+    };
+  },
+
+  /**
+   * Get user's block templates.
+   * Creates default templates if none exist.
+   */
+  async getTemplates(): Promise<UserTemplates> {
+    const user = await authService.getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, errors } = await client.models.UserTemplates.list();
+
+    if (errors?.length) {
+      throw new Error(errors[0].message);
+    }
+
+    // Should be at most one record per owner
+    const record = data[0];
+
+    if (record) {
+      const templates = typeof record.templates === 'string'
+        ? JSON.parse(record.templates)
+        : (record.templates ?? []);
+      return {
+        version: 1 as const,
+        userId: user.id,
+        templates: templates as BlockTemplate[],
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt,
+      };
+    }
+
+    // Create default templates for new user
+    const { createDefaultUserTemplates } = await import('@day-timeline/shared');
+    const defaultTemplates = createDefaultUserTemplates(user.id);
+    return this.putTemplates(defaultTemplates);
+  },
+
+  /**
+   * Delete the day state for a specific date.
+   */
+  async deleteState(date: string): Promise<void> {
+    const { data: existing } = await client.models.DayState.list({
+      filter: { date: { eq: date } },
+    });
+
+    const record = existing[0];
+    if (record) {
+      await client.models.DayState.delete({ id: record.id });
+    }
+  },
+
+  /**
+   * Save user's block templates.
+   */
+  async putTemplates(templates: UserTemplates): Promise<UserTemplates> {
+    const user = await authService.getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Check if record exists
+    const { data: existing } = await client.models.UserTemplates.list();
+    const record = existing[0];
+
+    let result;
+    if (record) {
+      const { data, errors } = await client.models.UserTemplates.update({
+        id: record.id,
+        version: 1,
+        templates: JSON.stringify(templates.templates),
+      });
+      if (errors?.length) throw new Error(errors[0].message);
+      result = data;
+    } else {
+      const { data, errors } = await client.models.UserTemplates.create({
+        version: 1,
+        templates: JSON.stringify(templates.templates),
+      });
+      if (errors?.length) throw new Error(errors[0].message);
+      result = data;
+    }
+
+    if (!result) {
+      throw new Error('Failed to save templates');
+    }
+
+    const parsedTemplates = typeof result.templates === 'string'
+      ? JSON.parse(result.templates)
+      : (result.templates ?? []);
+    return {
+      version: 1 as const,
+      userId: user.id,
+      templates: parsedTemplates as BlockTemplate[],
       createdAt: result.createdAt,
       updatedAt: result.updatedAt,
     };
