@@ -18,7 +18,7 @@ import { useCategoryStore } from '@/store/categoryStore';
 import { SwipeableWrapper } from './SwipeableWrapper';
 import { LiveTimer } from './LiveTimer';
 import { TaskList } from '@/components/tasks';
-import { formatTime } from '@/lib/time';
+import { formatTime, formatDuration } from '@/lib/time';
 import { DynamicIcon } from '@/components/ui/DynamicIcon';
 
 interface BlockItemProps {
@@ -216,22 +216,22 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
 
               {/* Duration and Controls */}
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-[hsl(var(--border)/0.3)]">
-                <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-4 text-sm font-mono">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[hsl(var(--muted-foreground))]">Est:</span>
-                    <span className="font-medium">{block.estimateMinutes}m</span>
+                    <span className="text-[hsl(var(--muted-foreground))] font-sans">Est:</span>
+                    <span>{formatDuration(block.estimateMinutes, false)}</span>
                   </div>
                   {(actualMinutes > 0 || block.completed) && (
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[hsl(var(--muted-foreground))]">Act:</span>
+                      <span className="text-[hsl(var(--muted-foreground))] font-sans">Act:</span>
                       <span
-                        className={`font-medium ${
+                        className={
                           actualMinutes > block.estimateMinutes
                             ? 'text-[hsl(var(--destructive))]'
                             : 'text-[hsl(var(--success))]'
-                        }`}
+                        }
                       >
-                        {Math.round(actualMinutes)}m
+                        {formatDuration(actualMinutes, false)}
                       </span>
                     </div>
                   )}
