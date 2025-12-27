@@ -128,7 +128,10 @@ export const DEFAULT_TEMPLATES: Omit<BlockTemplate, 'order'>[] = [
     name: 'Morning Routine',
     defaultMinutes: 90,
     category: 'routine',
-    tasks: [],
+    tasks: [
+      { id: 'mr-1', name: 'Shower', description: '', estimateMinutes: 15, order: 0 },
+      { id: 'mr-2', name: 'Breakfast', description: '', estimateMinutes: 30, order: 1 },
+    ],
     useTaskEstimates: false,
     isDefault: true,
     isHidden: false,
@@ -138,7 +141,10 @@ export const DEFAULT_TEMPLATES: Omit<BlockTemplate, 'order'>[] = [
     name: 'Deep Work',
     defaultMinutes: 150,
     category: 'work',
-    tasks: [],
+    tasks: [
+      { id: 'dw1-1', name: 'Review priorities', description: '', estimateMinutes: 15, order: 0 },
+      { id: 'dw1-2', name: 'Focus session', description: '', estimateMinutes: 90, order: 1 },
+    ],
     useTaskEstimates: false,
     isDefault: true,
     isHidden: false,
