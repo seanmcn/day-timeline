@@ -28,12 +28,15 @@ export const dataApi = {
     const record = data[0];
 
     if (record) {
+      const blocks = typeof record.blocks === 'string'
+        ? JSON.parse(record.blocks)
+        : (record.blocks ?? []);
       return {
         version: 1 as const,
         date: record.date,
         userId: user.id, // Get from auth context
         dayStartAt: record.dayStartAt ?? null,
-        blocks: (record.blocks as Block[]) ?? [],
+        blocks: blocks as Block[],
         createdAt: record.createdAt,
         updatedAt: record.updatedAt,
       };
@@ -68,7 +71,7 @@ export const dataApi = {
         date,
         version: 1,
         dayStartAt: state.dayStartAt,
-        blocks: state.blocks,
+        blocks: JSON.stringify(state.blocks),
       });
       if (errors?.length) throw new Error(errors[0].message);
       result = data;
@@ -78,7 +81,7 @@ export const dataApi = {
         date,
         version: 1,
         dayStartAt: state.dayStartAt,
-        blocks: state.blocks,
+        blocks: JSON.stringify(state.blocks),
       });
       if (errors?.length) throw new Error(errors[0].message);
       result = data;
@@ -88,12 +91,15 @@ export const dataApi = {
       throw new Error('Failed to save state');
     }
 
+    const blocks = typeof result.blocks === 'string'
+      ? JSON.parse(result.blocks)
+      : (result.blocks ?? []);
     return {
       version: 1 as const,
       date: result.date,
       userId: user.id, // Get from auth context
       dayStartAt: result.dayStartAt ?? null,
-      blocks: (result.blocks as Block[]) ?? [],
+      blocks: blocks as Block[],
       createdAt: result.createdAt,
       updatedAt: result.updatedAt,
     };
