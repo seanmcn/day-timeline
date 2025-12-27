@@ -1,5 +1,5 @@
 import { forwardRef, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
@@ -15,6 +15,7 @@ import { useDayStore } from '@/store/dayStore';
 import { useCategoryStore } from '@/store/categoryStore';
 import { SwipeableWrapper } from './SwipeableWrapper';
 import { LiveTimer } from './LiveTimer';
+import { CompletionCountdown } from './CompletionCountdown';
 import { TaskList } from '@/components/tasks';
 import { formatTime, formatDuration } from '@/lib/time';
 
@@ -24,10 +25,24 @@ interface BlockItemProps {
   dayStartAt: string | null;
   previousBlocks: Block[];
   onEdit: (block: Block) => void;
+  isPendingCompletion?: boolean;
+  countdownSeconds?: number;
+  onStartCountdown?: (blockId: string) => void;
+  onCancelCountdown?: (blockId: string) => void;
 }
 
 export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function BlockItem(
-  { block, index, dayStartAt, previousBlocks, onEdit },
+  {
+    block,
+    index,
+    dayStartAt,
+    previousBlocks,
+    onEdit,
+    isPendingCompletion = false,
+    countdownSeconds = 0,
+    onStartCountdown,
+    onCancelCountdown,
+  },
   forwardedRef
 ) {
   const {
@@ -95,8 +110,20 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
 
   const blockState = block.completed ? 'completed' : isActive ? 'active' : '';
 
-  const handleDone = () => completeBlock(block.id);
-  const handleUndo = () => uncompleteBlock(block.id);
+  const handleDone = () => {
+    if (onStartCountdown) {
+      onStartCountdown(block.id);
+    } else {
+      completeBlock(block.id);
+    }
+  };
+  const handleUndo = () => {
+    if (isPendingCompletion && onCancelCountdown) {
+      onCancelCountdown(block.id);
+    } else {
+      uncompleteBlock(block.id);
+    }
+  };
   const handleEdit = () => onEdit(block);
   const handleDuplicate = () => duplicateBlock(block.id);
   const handleDelete = () => deleteBlock(block.id);
@@ -126,6 +153,16 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
             borderLeftColor: `hsl(${categoryColor})`,
           }}
         >
+          {/* Countdown overlay */}
+          <AnimatePresence>
+            {isPendingCompletion && (
+              <CompletionCountdown
+                secondsRemaining={countdownSeconds}
+                onUndo={handleUndo}
+              />
+            )}
+          </AnimatePresence>
+
           <div className="flex items-start gap-3">
             {/* Drag Handle */}
             <div

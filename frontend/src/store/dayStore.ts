@@ -287,6 +287,7 @@ export const useDayStore = create<DayStore>((set, get) => ({
           ...block,
           sessions,
           completed: true,
+          completedAt: new Date().toISOString(),
         };
       });
 
@@ -306,7 +307,9 @@ export const useDayStore = create<DayStore>((set, get) => ({
       if (!state.dayState) return state;
 
       const blocks = state.dayState.blocks.map((block) =>
-        block.id === blockId ? { ...block, completed: false } : block
+        block.id === blockId
+          ? { ...block, completed: false, completedAt: undefined }
+          : block
       );
 
       const newState = {

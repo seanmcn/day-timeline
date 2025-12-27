@@ -16,14 +16,22 @@ import {
 } from '@dnd-kit/sortable';
 import { type Block } from '@day-timeline/shared';
 import { useDayStore } from '@/store/dayStore';
+import { useCompletionCountdown } from '@/hooks/useCompletionCountdown';
 import { BlockItem } from './BlockItem/index';
 
 interface BlockListProps {
   onEditBlock: (block: Block) => void;
+  showCompletedInList?: boolean;
 }
 
-export function BlockList({ onEditBlock }: BlockListProps) {
+export function BlockList({ onEditBlock, showCompletedInList = false }: BlockListProps) {
   const { dayState, reorderBlocks } = useDayStore();
+  const {
+    startCountdown,
+    cancelCountdown,
+    isPending,
+    getSecondsRemaining,
+  } = useCompletionCountdown();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -53,7 +61,19 @@ export function BlockList({ onEditBlock }: BlockListProps) {
   if (!dayState) return null;
 
   const sortedBlocks = [...dayState.blocks].sort((a, b) => a.order - b.order);
-  const blockIds = sortedBlocks.map((b) => b.id);
+
+  // Filter blocks to show in main list:
+  // - Show if not completed
+  // - Show if in countdown (pending completion)
+  // - Show if showCompletedInList is true
+  const visibleBlocks = sortedBlocks.filter((block) => {
+    if (!block.completed) return true;
+    if (isPending(block.id)) return true;
+    if (showCompletedInList) return true;
+    return false;
+  });
+
+  const blockIds = visibleBlocks.map((b) => b.id);
 
   return (
     <DndContext
@@ -64,16 +84,25 @@ export function BlockList({ onEditBlock }: BlockListProps) {
       <SortableContext items={blockIds} strategy={verticalListSortingStrategy}>
         <div className="space-y-3">
           <AnimatePresence mode="popLayout">
-            {sortedBlocks.map((block, index) => (
-              <BlockItem
-                key={block.id}
-                block={block}
-                index={index}
-                dayStartAt={dayState.dayStartAt}
-                previousBlocks={sortedBlocks.slice(0, index)}
-                onEdit={onEditBlock}
-              />
-            ))}
+            {visibleBlocks.map((block, index) => {
+              const blockIsPending = isPending(block.id);
+              return (
+                <BlockItem
+                  key={block.id}
+                  block={block}
+                  index={index}
+                  dayStartAt={dayState.dayStartAt}
+                  previousBlocks={sortedBlocks
+                    .slice(0, sortedBlocks.findIndex((b) => b.id === block.id))
+                    .filter((b) => !b.completed || isPending(b.id) || showCompletedInList)}
+                  onEdit={onEditBlock}
+                  isPendingCompletion={blockIsPending}
+                  countdownSeconds={blockIsPending ? getSecondsRemaining(block.id) : 0}
+                  onStartCountdown={startCountdown}
+                  onCancelCountdown={cancelCountdown}
+                />
+              );
+            })}
           </AnimatePresence>
         </div>
       </SortableContext>

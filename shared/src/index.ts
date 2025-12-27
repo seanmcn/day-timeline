@@ -214,6 +214,7 @@ export interface Block {
   notes: string;
   order: number;
   completed: boolean;
+  completedAt?: string; // ISO 8601 UTC timestamp when block was marked complete
   actualMinutesOverride?: number;
   useTaskEstimates: boolean; // If true, estimate = sum of task estimates
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Authenticator } from '@aws-amplify/ui-react';
@@ -14,7 +14,11 @@ import { BlockList } from '@/components/BlockList';
 import { DayMetrics } from '@/components/DayMetrics';
 import { AddBlockButton } from '@/components/AddBlockButton';
 import { AddBlockModal, EditBlockModal } from '@/components/modals';
+import { CompletedBlocksSidebar } from '@/components/CompletedBlocksSidebar';
+import { CompletedBlocksToggle } from '@/components/CompletedBlocksToggle';
 import { SettingsPage } from '@/components/settings/SettingsPage';
+
+const SHOW_COMPLETED_KEY = 'day-timeline-show-completed-in-list';
 
 export default function App() {
   return (
@@ -30,6 +34,24 @@ function AuthenticatedApp({ userId }: { userId: string }) {
   const [currentDate, setCurrentDate] = useState(getTodayKey());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingBlock, setEditingBlock] = useState<Block | null>(null);
+  const [showCompletedInList, setShowCompletedInList] = useState(() => {
+    const saved = localStorage.getItem(SHOW_COMPLETED_KEY);
+    return saved === 'true';
+  });
+
+  // Get completed blocks (excluding those in countdown - handled by BlockList)
+  const completedBlocks = useMemo(
+    () => dayState?.blocks.filter((b) => b.completed) ?? [],
+    [dayState?.blocks]
+  );
+
+  const handleToggleShowCompleted = () => {
+    setShowCompletedInList((prev) => {
+      const next = !prev;
+      localStorage.setItem(SHOW_COMPLETED_KEY, String(next));
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (userId) {
@@ -106,6 +128,14 @@ function AuthenticatedApp({ userId }: { userId: string }) {
                           onDateChange={handleDateChange}
                         />
                         {dayState?.dayStartAt && <DayMetrics />}
+                        {/* Desktop: Completed blocks sidebar */}
+                        {dayState?.dayStartAt && (
+                          <CompletedBlocksSidebar
+                            blocks={completedBlocks}
+                            showInMainList={showCompletedInList}
+                            onToggleShowInMainList={handleToggleShowCompleted}
+                          />
+                        )}
                       </div>
 
                       {/* Main content - blocks */}
@@ -119,7 +149,16 @@ function AuthenticatedApp({ userId }: { userId: string }) {
                             transition={{ delay: 0.2 }}
                             className="space-y-3"
                           >
-                            <BlockList onEditBlock={handleEditBlock} />
+                            {/* Mobile: Completed blocks toggle */}
+                            <CompletedBlocksToggle
+                              count={completedBlocks.length}
+                              showInMainList={showCompletedInList}
+                              onToggle={handleToggleShowCompleted}
+                            />
+                            <BlockList
+                              onEditBlock={handleEditBlock}
+                              showCompletedInList={showCompletedInList}
+                            />
                             <AddBlockButton onClick={() => setIsAddModalOpen(true)} />
                           </motion.div>
                         )}
