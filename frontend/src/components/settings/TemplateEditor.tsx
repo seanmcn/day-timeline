@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { X, Plus } from 'lucide-react';
 import { useTemplateStore } from '@/store/templateStore';
 import type { BlockTemplate, BlockCategory, TaskTemplate } from '@day-timeline/shared';
 import { calculateBlockEstimateFromTasks } from '@day-timeline/shared';
@@ -51,58 +53,66 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
   };
 
   const categoryOptions: { value: BlockCategory; label: string; color: string }[] = [
-    { value: 'work', label: 'Work', color: 'bg-blue-500' },
-    { value: 'routine', label: 'Routine', color: 'bg-gray-500' },
-    { value: 'movement', label: 'Movement', color: 'bg-green-500' },
-    { value: 'leisure', label: 'Leisure', color: 'bg-purple-500' },
+    { value: 'work', label: 'Work', color: 'bg-[hsl(var(--primary))]' },
+    { value: 'routine', label: 'Routine', color: 'bg-[hsl(var(--accent))]' },
+    { value: 'movement', label: 'Movement', color: 'bg-[hsl(var(--success))]' },
+    { value: 'leisure', label: 'Leisure', color: 'bg-[hsl(var(--warning))]' },
   ];
 
   const taskSum = calculateBlockEstimateFromTasks(template.tasks);
 
   return (
-    <div className="rounded-xl border border-[var(--color-accent)] bg-[var(--color-surface)] p-4">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="glass-card border-[hsl(var(--primary)/0.5)] p-4"
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-medium">Edit Template</h3>
         <div className="flex items-center gap-2">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={onCancel}
-            className="px-3 py-1.5 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+            className="action-button px-3 py-1.5 text-sm"
           >
             Cancel
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={handleSave}
-            className="px-3 py-1.5 text-sm bg-[var(--color-accent)] text-white rounded-lg hover:opacity-90 transition-opacity"
+            className="px-3 py-1.5 text-sm bg-[hsl(var(--primary))] text-white rounded-lg hover:opacity-90 transition-opacity"
           >
             Save
-          </button>
+          </motion.button>
         </div>
       </div>
 
       {/* Name */}
       <div className="mb-4">
-        <label className="block text-sm text-[var(--color-text-muted)] mb-1">Name</label>
+        <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1">Name</label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2"
+          className="w-full bg-[hsl(var(--input))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)]"
         />
       </div>
 
       {/* Category */}
       <div className="mb-4">
-        <label className="block text-sm text-[var(--color-text-muted)] mb-1">Category</label>
-        <div className="flex gap-2">
+        <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1">Category</label>
+        <div className="flex gap-2 flex-wrap">
           {categoryOptions.map((opt) => (
             <button
               key={opt.value}
               onClick={() => setCategory(opt.value)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors ${
                 category === opt.value
-                  ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10'
-                  : 'border-[var(--color-border)] hover:border-[var(--color-text-muted)]'
+                  ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)]'
+                  : 'border-[hsl(var(--border))] hover:border-[hsl(var(--muted-foreground))]'
               }`}
             >
               <span className={`w-3 h-3 rounded-full ${opt.color}`} />
@@ -114,7 +124,7 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
 
       {/* Duration */}
       <div className="mb-4">
-        <label className="block text-sm text-[var(--color-text-muted)] mb-1">
+        <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1">
           Duration (minutes)
         </label>
         <div className="flex items-center gap-3">
@@ -125,7 +135,7 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
             disabled={useTaskEstimates}
             min="0"
             step="15"
-            className={`w-24 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2 ${
+            className={`w-24 bg-[hsl(var(--input))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] ${
               useTaskEstimates ? 'opacity-50' : ''
             }`}
           />
@@ -135,9 +145,9 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
                 type="checkbox"
                 checked={useTaskEstimates}
                 onChange={(e) => setUseTaskEstimates(e.target.checked)}
-                className="rounded"
+                className="rounded accent-[hsl(var(--primary))]"
               />
-              <span className="text-[var(--color-text-muted)]">
+              <span className="text-[hsl(var(--muted-foreground))]">
                 Use task sum ({taskSum}m)
               </span>
             </label>
@@ -152,14 +162,14 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
             type="checkbox"
             checked={isHidden}
             onChange={(e) => setIsHidden(e.target.checked)}
-            className="rounded"
+            className="rounded accent-[hsl(var(--primary))]"
           />
           <span className="text-sm">Hide from daily timeline</span>
         </label>
       </div>
 
       {/* Tasks */}
-      <div className="border-t border-[var(--color-border)] pt-4 mt-4">
+      <div className="border-t border-[hsl(var(--border))] pt-4 mt-4">
         <h4 className="text-sm font-medium mb-3">Tasks</h4>
 
         {template.tasks.length > 0 && (
@@ -169,13 +179,13 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
               .map((task) => (
                 <div
                   key={task.id}
-                  className="flex items-center gap-2 bg-[var(--color-bg)] rounded-lg p-2"
+                  className="flex items-center gap-2 bg-[hsl(var(--input))] rounded-lg p-2"
                 >
                   <input
                     type="text"
                     value={task.name}
                     onChange={(e) => handleUpdateTask(task.id, { name: e.target.value })}
-                    className="flex-1 bg-transparent border-none px-2 py-1 text-sm"
+                    className="flex-1 bg-transparent border-none px-2 py-1 text-sm focus:outline-none"
                     placeholder="Task name"
                   />
                   <input
@@ -188,25 +198,18 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
                     }
                     min="0"
                     step="5"
-                    className="w-16 bg-[var(--color-surface)] border border-[var(--color-border)] rounded px-2 py-1 text-sm text-center"
+                    className="w-16 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.5)]"
                   />
-                  <span className="text-xs text-[var(--color-text-muted)]">m</span>
-                  <button
+                  <span className="text-xs text-[hsl(var(--muted-foreground))]">m</span>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                     onClick={() => handleRemoveTask(task.id)}
-                    className="p-1 text-[var(--color-text-muted)] hover:text-[var(--color-error)] transition-colors"
+                    className="action-button p-1 hover:text-[hsl(var(--destructive))]"
                     aria-label="Remove task"
                   >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M4 4l8 8M12 4l-8 8" />
-                    </svg>
-                  </button>
+                    <X size={16} />
+                  </motion.button>
                 </div>
               ))}
           </div>
@@ -220,7 +223,7 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
             onChange={(e) => setNewTaskName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
             placeholder="Add a task..."
-            className="flex-1 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm"
+            className="flex-1 bg-[hsl(var(--input))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)]"
           />
           <input
             type="number"
@@ -228,40 +231,35 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
             onChange={(e) => setNewTaskMinutes(parseInt(e.target.value) || 0)}
             min="0"
             step="5"
-            className="w-16 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-2 py-2 text-sm text-center"
+            className="w-16 bg-[hsl(var(--input))] border border-[hsl(var(--border))] rounded-lg px-2 py-2 text-sm text-center focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.5)]"
           />
-          <span className="text-xs text-[var(--color-text-muted)]">m</span>
-          <button
+          <span className="text-xs text-[hsl(var(--muted-foreground))]">m</span>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={handleAddTask}
             disabled={!newTaskName.trim()}
-            className="p-2 bg-[var(--color-accent)] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="p-2 bg-[hsl(var(--primary))] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
             aria-label="Add task"
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M8 3v10M3 8h10" />
-            </svg>
-          </button>
+            <Plus size={16} />
+          </motion.button>
         </div>
       </div>
 
       {/* Delete button */}
       {!template.isDefault && (
-        <div className="border-t border-[var(--color-border)] pt-4 mt-4">
-          <button
+        <div className="border-t border-[hsl(var(--border))] pt-4 mt-4">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={onDelete}
-            className="text-sm text-[var(--color-error)] hover:underline"
+            className="text-sm text-[hsl(var(--destructive))] hover:underline"
           >
             Delete this template
-          </button>
+          </motion.button>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
