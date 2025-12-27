@@ -12,7 +12,7 @@ export function Header() {
     <motion.header
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="sticky top-0 z-10 bg-[hsl(var(--background)/0.8)] backdrop-blur-xl border-b border-[hsl(var(--border)/0.5)] px-4 py-3"
+      className="sticky top-0 z-50 bg-[hsl(var(--background)/0.8)] backdrop-blur-xl border-b border-[hsl(var(--border)/0.5)] px-4 py-3"
     >
       <div className="max-w-2xl mx-auto flex items-center justify-between">
         <h1 className="font-heading text-xl md:text-2xl font-semibold tracking-tight">
