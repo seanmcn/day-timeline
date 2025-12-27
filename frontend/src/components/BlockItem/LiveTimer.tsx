@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Timer } from 'lucide-react';
+import { formatDuration } from '@/lib/time';
 
 interface LiveTimerProps {
   isRunning: boolean;
@@ -86,7 +87,7 @@ export function LiveTimer({ isRunning, isPaused, actualMinutes, estimateMinutes 
 
       <div className="flex justify-between mt-1.5 text-xs text-[hsl(var(--muted-foreground))]">
         <span>0:00</span>
-        <span>{estimateMinutes}m est.</span>
+        <span>{formatDuration(estimateMinutes, false)} est.</span>
       </div>
     </motion.div>
   );

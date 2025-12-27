@@ -211,26 +211,31 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
 
               {/* Duration and Controls */}
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-[hsl(var(--border)/0.3)]">
-                <div className="flex items-center gap-4 text-sm font-mono">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[hsl(var(--muted-foreground))] font-sans">Est:</span>
-                    <span>{formatDuration(block.estimateMinutes, false)}</span>
-                  </div>
-                  {(actualMinutes > 0 || block.completed) && (
+                {/* Only show Est/Act when timer is not visible */}
+                {!hasActiveSession && !isPaused ? (
+                  <div className="flex items-center gap-4 text-sm font-mono">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[hsl(var(--muted-foreground))] font-sans">Act:</span>
-                      <span
-                        className={
-                          actualMinutes > block.estimateMinutes
-                            ? 'text-[hsl(var(--destructive))]'
-                            : 'text-[hsl(var(--success))]'
-                        }
-                      >
-                        {formatDuration(actualMinutes, false)}
-                      </span>
+                      <span className="text-[hsl(var(--muted-foreground))] font-sans">Est:</span>
+                      <span>{formatDuration(block.estimateMinutes, false)}</span>
                     </div>
-                  )}
-                </div>
+                    {(actualMinutes > 0 || block.completed) && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[hsl(var(--muted-foreground))] font-sans">Act:</span>
+                        <span
+                          className={
+                            actualMinutes > block.estimateMinutes
+                              ? 'text-[hsl(var(--destructive))]'
+                              : 'text-[hsl(var(--success))]'
+                          }
+                        >
+                          {formatDuration(actualMinutes, false)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div />
+                )}
 
                 <div className="flex items-center gap-2">
                   {!block.completed && (
