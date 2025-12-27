@@ -19,7 +19,6 @@ import { SwipeableWrapper } from './SwipeableWrapper';
 import { LiveTimer } from './LiveTimer';
 import { TaskList } from '@/components/tasks';
 import { formatTime, formatDuration } from '@/lib/time';
-import { DynamicIcon } from '@/components/ui/DynamicIcon';
 
 interface BlockItemProps {
   block: Block;
@@ -120,7 +119,13 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
         isCompleted={block.completed}
         disabled={false}
       >
-        <div className={`timeline-block glass-card-hover p-4 ${blockState}`}>
+        <div
+          className={`timeline-block glass-card-hover p-4 ${blockState}`}
+          style={{
+            borderLeftWidth: '4px',
+            borderLeftColor: `hsl(${categoryColor})`,
+          }}
+        >
           <div className="flex items-start gap-3">
             {/* Drag Handle */}
             <div
@@ -166,23 +171,11 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
                       </motion.span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    {plannedTime && (
-                      <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                        {formatTime(plannedTime)}
-                      </span>
-                    )}
-                    <span
-                      className="category-badge flex items-center gap-1.5"
-                      style={{
-                        backgroundColor: `hsl(${categoryColor} / 0.2)`,
-                        color: `hsl(${categoryColor})`,
-                      }}
-                    >
-                      <DynamicIcon name={category?.icon ?? 'circle'} size={12} />
-                      {category?.name ?? block.category}
-                    </span>
-                  </div>
+                  {plannedTime && (
+                    <div className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
+                      {formatTime(plannedTime)}
+                    </div>
+                  )}
                 </div>
 
                 {/* Action Buttons */}
