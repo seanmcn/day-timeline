@@ -300,3 +300,206 @@ select {
 .swipe-content {
   touch-action: pan-y;
 }
+
+/* Amplify Authenticator Overrides */
+[data-amplify-authenticator] {
+  --amplify-colors-background-primary: hsl(var(--card));
+  --amplify-colors-background-secondary: hsl(var(--secondary));
+  --amplify-colors-background-tertiary: hsl(var(--muted));
+  --amplify-colors-border-primary: hsl(var(--border));
+  --amplify-colors-border-secondary: hsl(var(--border));
+  --amplify-colors-border-focus: hsl(var(--primary));
+  --amplify-colors-font-primary: hsl(var(--foreground));
+  --amplify-colors-font-secondary: hsl(var(--muted-foreground));
+  --amplify-colors-font-tertiary: hsl(var(--muted-foreground));
+  --amplify-colors-font-interactive: hsl(var(--primary));
+  --amplify-colors-font-hover: hsl(var(--accent));
+  --amplify-colors-brand-primary-10: hsl(var(--primary) / 0.1);
+  --amplify-colors-brand-primary-20: hsl(var(--primary) / 0.2);
+  --amplify-colors-brand-primary-40: hsl(var(--primary) / 0.4);
+  --amplify-colors-brand-primary-60: hsl(var(--primary) / 0.6);
+  --amplify-colors-brand-primary-80: hsl(var(--primary));
+  --amplify-colors-brand-primary-90: hsl(var(--primary));
+  --amplify-colors-brand-primary-100: hsl(var(--accent));
+  --amplify-fonts-default-static: 'Instrument Sans', system-ui, sans-serif;
+  --amplify-radii-small: var(--radius);
+  --amplify-radii-medium: var(--radius);
+  --amplify-radii-large: var(--radius);
+  --amplify-space-small: 0.75rem;
+  --amplify-space-medium: 1rem;
+  --amplify-space-large: 1.5rem;
+
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: hsl(var(--background));
+}
+
+[data-amplify-authenticator] [data-amplify-router] {
+  background-color: hsl(var(--card) / 0.9) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--border) / 0.5) !important;
+  border-radius: var(--radius) !important;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.2),
+    0 2px 4px -1px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-amplify-authenticator] [data-amplify-form] {
+  padding: 1.5rem !important;
+}
+
+[data-amplify-authenticator] .amplify-flex {
+  background-color: transparent !important;
+}
+
+[data-amplify-authenticator] .amplify-heading {
+  font-family: 'Sora', system-ui, sans-serif;
+  color: hsl(var(--foreground));
+}
+
+[data-amplify-authenticator] .amplify-label,
+[data-amplify-authenticator] label {
+  color: hsl(var(--foreground)) !important;
+  font-weight: 500 !important;
+}
+
+[data-amplify-authenticator] .amplify-input,
+[data-amplify-authenticator] input {
+  background-color: hsl(var(--secondary)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  color: hsl(var(--foreground)) !important;
+  padding: 0.75rem 1rem;
+  transition: all 0.2s ease;
+}
+
+[data-amplify-authenticator] .amplify-input:focus,
+[data-amplify-authenticator] input:focus {
+  outline: none !important;
+  border-color: hsl(var(--primary) / 0.5) !important;
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2) !important;
+}
+
+[data-amplify-authenticator] .amplify-input::placeholder,
+[data-amplify-authenticator] input::placeholder {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+[data-amplify-authenticator] .amplify-button--primary {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.4);
+}
+
+[data-amplify-authenticator] .amplify-button--primary:hover {
+  background-color: hsl(var(--accent));
+  box-shadow: 0 0 30px -5px hsl(var(--primary) / 0.6);
+  transform: translateY(-1px);
+}
+
+[data-amplify-authenticator] .amplify-button--link {
+  color: hsl(var(--primary));
+  background: none;
+  border: none;
+  font-weight: 500;
+}
+
+[data-amplify-authenticator] .amplify-button--link:hover {
+  color: hsl(var(--accent));
+  text-decoration: underline;
+}
+
+[data-amplify-authenticator] .amplify-tabs {
+  border-bottom: 1px solid hsl(var(--border)) !important;
+  background-color: transparent !important;
+}
+
+[data-amplify-authenticator] .amplify-tabs-item {
+  color: hsl(var(--muted-foreground)) !important;
+  border: none !important;
+  background: transparent !important;
+  font-weight: 500 !important;
+  padding: 0.75rem 1rem;
+  transition: color 0.2s ease;
+}
+
+[data-amplify-authenticator] .amplify-tabs-item:hover {
+  color: hsl(var(--foreground)) !important;
+  background-color: transparent !important;
+}
+
+[data-amplify-authenticator] .amplify-tabs-item[data-state='active'] {
+  color: hsl(var(--primary)) !important;
+  border-bottom: 2px solid hsl(var(--primary)) !important;
+  background-color: transparent !important;
+}
+
+[data-amplify-authenticator] .amplify-alert {
+  background-color: hsl(var(--destructive) / 0.1);
+  border: 1px solid hsl(var(--destructive) / 0.3);
+  border-radius: var(--radius);
+  color: hsl(var(--destructive));
+}
+
+[data-amplify-authenticator] .amplify-alert--error {
+  background-color: hsl(var(--destructive) / 0.1);
+  border-color: hsl(var(--destructive) / 0.3);
+}
+
+[data-amplify-authenticator] .amplify-text {
+  color: hsl(var(--muted-foreground));
+}
+
+[data-amplify-authenticator] a {
+  color: hsl(var(--primary));
+  transition: color 0.2s ease;
+}
+
+[data-amplify-authenticator] a:hover {
+  color: hsl(var(--accent));
+}
+
+[data-amplify-authenticator] .amplify-field-group__outer-end .amplify-button,
+[data-amplify-authenticator] .amplify-field__show-password {
+  background-color: hsl(var(--secondary)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-left: none !important;
+  color: hsl(var(--muted-foreground)) !important;
+  border-radius: 0 var(--radius) var(--radius) 0 !important;
+}
+
+[data-amplify-authenticator] .amplify-field-group__outer-end .amplify-button:hover,
+[data-amplify-authenticator] .amplify-field__show-password:hover {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Field group container */
+[data-amplify-authenticator] .amplify-field-group {
+  background-color: transparent !important;
+}
+
+[data-amplify-authenticator] .amplify-field-group__field-wrapper {
+  background-color: transparent !important;
+}
+
+/* Catch-all for any remaining white backgrounds */
+[data-amplify-authenticator] .amplify-authenticator__column,
+[data-amplify-authenticator] .amplify-authenticator__form,
+[data-amplify-authenticator] [data-amplify-footer],
+[data-amplify-authenticator] .amplify-divider {
+  background-color: transparent !important;
+}
+
+[data-amplify-authenticator] .amplify-divider {
+  border-color: hsl(var(--border)) !important;
+}
