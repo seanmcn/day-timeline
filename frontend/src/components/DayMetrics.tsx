@@ -6,11 +6,22 @@ import { useCategoryStore } from '@/store/categoryStore';
 import { formatDuration, formatTime } from '@/lib/time';
 import { DynamicIcon } from '@/components/ui/DynamicIcon';
 
+const METRICS_EXPANDED_KEY = 'day-timeline-metrics-expanded';
+
 export function DayMetrics() {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(() => {
+    const saved = localStorage.getItem(METRICS_EXPANDED_KEY);
+    return saved !== null ? saved === 'true' : true;
+  });
   const { metrics } = useDayStore();
 
-  const handleToggle = () => setIsExpanded((prev) => !prev);
+  const handleToggle = () => {
+    setIsExpanded((prev) => {
+      const next = !prev;
+      localStorage.setItem(METRICS_EXPANDED_KEY, String(next));
+      return next;
+    });
+  };
   const allCategories = useCategoryStore((state) => state.categories);
 
   if (!metrics) return null;
