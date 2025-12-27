@@ -1,12 +1,8 @@
-# day-timeline
+# Day Timeline
 
 A block-based daily timeline with planned vs actual tracking.
 
-This is a small, personal web app I built to help myself have better days without rigid schedules or productivity theatre. It's designed for flexibility: you plan your day in rough blocks, track what actually happens, and let the timeline adapt as the day unfolds.
-
-It's opinionated, but intentionally simple.
-
----
+A small, personal web app to help you have better days without rigid schedules or productivity theatre. Plan your day in rough blocks, track what actually happens, and let the timeline adapt as the day unfolds.
 
 ## What it is
 
@@ -15,16 +11,8 @@ It's opinionated, but intentionally simple.
 - Each block has:
   - an estimated duration
   - actual time tracked via start/stop
-- Shows **planned vs actual**, including how your day (and bedtime) drifts
+- Shows **planned vs actual**, including how your day drifts
 - Designed for night owls and non-linear days
-
-You can:
-- reorder blocks
-- duplicate blocks (e.g. multiple work or break sessions)
-- adjust estimates day by day
-- see whether you're ahead or behind without guilt
-
----
 
 ## What it is not
 
@@ -35,121 +23,39 @@ You can:
 
 This is a tool for running *one* day at a time.
 
----
+## Features
 
-## Features (MVP)
+- **"I'm Awake" button** - Start your day with a single tap
+- **Flexible blocks** - Reorder, duplicate, or adjust estimates as needed
+- **Time tracking** - Start/stop per block, with multiple sessions supported
+- **Planned vs actual** - See how your estimates compare to reality
+- **Ahead/behind indicator** - Know if you're running early or late
+- **Bedtime forecast** - See when you'll finish based on remaining blocks
+- **Category breakdown** - Track time across work, routine, leisure, etc.
+- **Cross-device sync** - Changes sync in real-time across all your devices
+- **Touch-friendly** - Works great on mobile and tablet with swipe gestures
 
-- "I'm awake" button to start the day
-- Flexible, reorderable day blocks
-- Per-block time tracking (multiple sessions)
-- Planned vs actual time comparison
-- Bedtime forecast based on remaining plan
-- Daily totals (work, movement, downtime)
-- Syncs across devices
-- Touch-friendly UI (works well on iPad)
+## Screenshots
 
----
+<table>
+  <tr>
+    <td><a href="docs/images/desktop.png"><img src="docs/images/desktop.png" alt="Desktop view" width="600"></a></td>
+    <td><a href="docs/images/mobile.png"><img src="docs/images/mobile.png" alt="Mobile view" width="200"></a></td>
+  </tr>
+</table>
 
-## Tech stack
+## Self-Hosting
 
-- **Frontend**: React + Vite + TypeScript + Tailwind CSS
-- **Drag & Drop**: @dnd-kit
-- **State**: Zustand
-- **Backend**: AWS Lambda (Node.js 20) + API Gateway HTTP API
-- **Auth**: AWS Cognito
-- **Storage**: S3 (JSON per day)
-- **Hosting**: AWS Amplify
-- **Local Dev**: Docker + LocalStack
-
-There's no database. State is stored as small JSON files.
-
----
-
-## Project structure
-
-```
-day-timeline/
-├── frontend/          # Vite React app
-├── backend/           # Lambda functions
-├── shared/            # Shared TypeScript types
-├── docker/            # Docker/LocalStack configuration
-├── scripts/           # Development scripts
-└── docker-compose.yml
-```
-
----
-
-## Running locally
-
-### Prerequisites
+Day Timeline is self-hosted using AWS Amplify. You'll need:
 
 - Node.js 20+
-- Docker and Docker Compose
-- npm 9+
+- An AWS account
 
-### Quick start
-
-```bash
-# Clone the repo
-git clone <repo-url>
-cd day-timeline
-
-# Install dependencies
-npm install
-npm run build:shared
-
-# Start LocalStack (for S3)
-docker compose up -d
-
-# Create the S3 bucket (first time only)
-docker exec day-timeline-localstack awslocal s3 mb s3://day-timeline-storage
-
-# Terminal 1: Start the backend API
-npm run dev:backend
-
-# Terminal 2: Start the frontend
-npm run dev:frontend
-```
-
-The app will be available at http://localhost:3000
-
-### Available commands
-
-```bash
-npm run dev:frontend   # Start frontend dev server (port 3000)
-npm run dev:backend    # Start local API server (port 3001)
-npm run docker:up      # Start LocalStack
-npm run docker:down    # Stop LocalStack
-npm run docker:logs    # View LocalStack logs
-npm run build          # Build all packages
-npm run build:shared   # Build shared types only
-npm run typecheck      # Run TypeScript checks
-```
-
----
-
-## Default blocks
-
-| Block | Default Time | Category |
-|-------|-------------|----------|
-| Wake + Warm-up | 90 min | routine |
-| Deep Work | 150 min | work |
-| Break + Movement | 30 min | movement |
-| Food + Admin | 90 min | routine |
-| Dota | 90 min | leisure |
-| Light Work | 90 min | work |
-| Wind-down | 120 min | routine |
-| Bed (Comics) | 120 min | routine |
-
----
+To deploy your own instance, see the [Development Guide](docs/dev.md) for setup instructions.
 
 ## Status
 
-This is an early MVP built for personal use.
-
-It works, but it's intentionally minimal and will evolve slowly. Backwards compatibility is not guaranteed.
-
----
+This is an early MVP built for personal use. It works, but it's intentionally minimal and will evolve slowly.
 
 ## License
 
