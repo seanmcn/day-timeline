@@ -215,8 +215,8 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
                   )}
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-1 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                {/* Action Buttons - desktop only, swipe left on mobile */}
+                <div className="hidden lg:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <motion.button
                     whileTap={{ scale: 0.9 }}
                     onClick={handleEdit}
