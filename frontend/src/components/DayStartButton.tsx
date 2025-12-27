@@ -1,9 +1,38 @@
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Sun, Clock } from 'lucide-react';
 import { useDayStore } from '@/store/dayStore';
 
+const MESSAGE_VARIATIONS = [
+  { heading: "Ready to start your day?", button: "I'm awake" },
+  { heading: "Rise and shine!", button: "Let's go" },
+  { heading: "Good morning!", button: "Start my day" },
+  { heading: "Time to seize the day!", button: "I'm ready" },
+  { heading: "A new day awaits!", button: "Let's do this" },
+  { heading: "Ready to be productive?", button: "Absolutely" },
+  { heading: "What will you accomplish today?", button: "Let's find out" },
+  { heading: "The day is yours!", button: "Claim it" },
+  { heading: "Adventure awaits!", button: "Begin" },
+  { heading: "Time to make things happen!", button: "On it" },
+  { heading: "Ready to crush it?", button: "Born ready" },
+  { heading: "Let's make today count!", button: "Count me in" },
+  { heading: "Your day starts now!", button: "Let's roll" },
+  { heading: "What's on the agenda?", button: "Show me" },
+  { heading: "Time to get things done!", button: "Bring it on" },
+  { heading: "Another day, another chance!", button: "Seize it" },
+  { heading: "Ready for a great day?", button: "Always" },
+  { heading: "The world awaits!", button: "Here I come" },
+  { heading: "Today's going to be good!", button: "I agree" },
+  { heading: "Coffee time is over!", button: "Fine, let's go" },
+];
+
 export function DayStartButton() {
   const { startDay } = useDayStore();
+
+  const message = useMemo(() => {
+    const index = Math.floor(Math.random() * MESSAGE_VARIATIONS.length);
+    return MESSAGE_VARIATIONS[index];
+  }, []);
 
   const now = new Date();
   const timeString = now.toLocaleTimeString('en-US', {
@@ -36,7 +65,7 @@ export function DayStartButton() {
           transition={{ delay: 0.15 }}
           className="font-heading text-2xl font-semibold text-[hsl(var(--foreground))] mb-2"
         >
-          Ready to start your day?
+          {message.heading}
         </motion.h2>
 
         {/* Current time */}
@@ -60,7 +89,7 @@ export function DayStartButton() {
           onClick={() => startDay()}
           className="w-full bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] font-semibold text-lg px-8 py-4 rounded-xl transition-colors glow-primary"
         >
-          I'm awake
+          {message.button}
         </motion.button>
 
         {/* Hint */}
