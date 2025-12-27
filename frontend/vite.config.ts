@@ -7,6 +7,15 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 3000,
+    watch: {
+      ignored: [
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/.amplify/**',
+        '**/dist/**',
+        '**/.vite/**',
+      ],
+    },
   },
   resolve: {
     alias: {
