@@ -10,6 +10,4 @@ export const auth = defineAuth({
       mutable: true,
     },
   },
-  // Invite-only: users are created via admin API or AWS Console
-  // No self-registration allowed
 });

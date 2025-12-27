@@ -1,38 +1,29 @@
 import { useEffect } from 'react';
+import { Authenticator } from '@aws-amplify/ui-react';
+import '@aws-amplify/ui-react/styles.css';
 import { useDayStore } from '@/store/dayStore';
-import { useAuthStore } from '@/store/authStore';
 import { Header } from '@/components/Header';
 import { DayStartButton } from '@/components/DayStartButton';
 import { BlockList } from '@/components/BlockList';
 import { DayMetrics } from '@/components/DayMetrics';
-import { Login } from '@/components/Login';
 import { getTodayKey } from '@day-timeline/shared';
 
 export default function App() {
+  return (
+    <Authenticator>
+      {({ user }) => <AuthenticatedApp userId={user?.userId ?? ''} />}
+    </Authenticator>
+  );
+}
+
+function AuthenticatedApp({ userId }: { userId: string }) {
   const { dayState, isLoading, error, loadDay } = useDayStore();
-  const { user, isLoading: authLoading, checkAuth } = useAuthStore();
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  useEffect(() => {
-    if (user) {
+    if (userId) {
       loadDay(getTodayKey());
     }
-  }, [user, loadDay]);
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[var(--color-text-muted)]">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Login />;
-  }
+  }, [userId, loadDay]);
 
   if (isLoading) {
     return (
