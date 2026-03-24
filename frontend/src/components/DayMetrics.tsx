@@ -83,12 +83,12 @@ export function DayMetrics() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm font-mono">
-                      <span className="text-[hsl(var(--muted-foreground))]">
-                        {formatDuration(data.planned)}
-                      </span>
-                      <span className="text-[hsl(var(--border))]">/</span>
                       <span className={deltaColor}>
                         {formatDuration(data.actual)}
+                      </span>
+                      <span className="text-[hsl(var(--border))]">/</span>
+                      <span className="text-[hsl(var(--muted-foreground))]">
+                        {formatDuration(data.planned)}
                       </span>
                     </div>
                   </motion.div>
@@ -115,12 +115,12 @@ export function DayMetrics() {
                 <span className="text-sm font-medium">Total</span>
               </div>
               <div className="flex items-center gap-2 text-sm font-mono">
-                <span className="text-[hsl(var(--muted-foreground))]">
-                  {formatDuration(metrics.totalPlannedMinutes)}
-                </span>
-                <span className="text-[hsl(var(--border))]">/</span>
                 <span className={totalDeltaColor}>
                   {formatDuration(metrics.totalActualMinutes)}
+                </span>
+                <span className="text-[hsl(var(--border))]">/</span>
+                <span className="text-[hsl(var(--muted-foreground))]">
+                  {formatDuration(metrics.totalPlannedMinutes)}
                 </span>
               </div>
             </motion.div>
