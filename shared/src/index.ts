@@ -107,6 +107,7 @@ export interface BlockTemplate {
   category: BlockCategory;
   tasks: TaskTemplate[];
   useTaskEstimates: boolean; // If true, estimate = sum of task estimates
+  scheduledAt?: string; // HH:mm format - pins block to specific time of day
   order: number;
   isDefault: boolean; // System default (can be hidden but not deleted)
   isHidden: boolean; // User can hide templates they don't use
@@ -312,6 +313,7 @@ export function createBlockFromTemplate(template: BlockTemplate, order: number):
     order,
     completed: false,
     useTaskEstimates: template.useTaskEstimates,
+    scheduledAt: template.scheduledAt,
   };
 }
 

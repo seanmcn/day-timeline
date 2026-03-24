@@ -24,6 +24,8 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
   const [category, setCategory] = useState<BlockCategory>(template.category);
   const [isHidden, setIsHidden] = useState(template.isHidden);
   const [useTaskEstimates, setUseTaskEstimates] = useState(template.useTaskEstimates);
+  const [isPinned, setIsPinned] = useState(!!template.scheduledAt);
+  const [scheduledTime, setScheduledTime] = useState(template.scheduledAt || '09:00');
 
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskMinutes, setNewTaskMinutes] = useState(15);
@@ -35,6 +37,7 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
       category,
       isHidden,
       useTaskEstimates,
+      scheduledAt: isPinned && scheduledTime ? scheduledTime : undefined,
     });
   };
 
@@ -163,6 +166,27 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
           />
           <span className="text-sm">Hide from daily timeline</span>
         </label>
+      </div>
+
+      {/* Pin to time */}
+      <div className="mb-4">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isPinned}
+            onChange={(e) => setIsPinned(e.target.checked)}
+            className="rounded accent-[hsl(var(--primary))]"
+          />
+          <span className="text-sm">Pin to specific time</span>
+        </label>
+        {isPinned && (
+          <input
+            type="time"
+            value={scheduledTime}
+            onChange={(e) => setScheduledTime(e.target.value)}
+            className="mt-2 w-full bg-[hsl(var(--input))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)]"
+          />
+        )}
       </div>
 
       {/* Tasks */}
