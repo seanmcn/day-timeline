@@ -39,13 +39,7 @@ export function DayMetrics() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
       className="glass-card p-4 mb-4 cursor-pointer select-none"
-      onDoubleClick={handleToggle}
-      onTouchEnd={(e) => {
-        // Single tap on touch devices
-        if (e.changedTouches.length === 1) {
-          handleToggle();
-        }
-      }}
+      onClick={handleToggle}
     >
       <AnimatePresence mode="wait">
         {isExpanded ? (
