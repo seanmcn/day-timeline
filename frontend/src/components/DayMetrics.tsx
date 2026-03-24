@@ -179,6 +179,10 @@ export function DayMetrics() {
                 <span className={`text-xs font-mono ${totalDeltaColor}`}>
                   {formatDuration(metrics.totalActualMinutes, false)}
                 </span>
+                <span className="text-xs text-[hsl(var(--border))]">/</span>
+                <span className="text-xs font-mono text-[hsl(var(--muted-foreground))]">
+                  {formatDuration(metrics.totalPlannedMinutes, false)}
+                </span>
               </div>
             </div>
 
