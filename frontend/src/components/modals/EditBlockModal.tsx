@@ -20,6 +20,8 @@ export function EditBlockModal({ block, onClose, onSave }: EditBlockModalProps) 
   const [actualMinutesOverride, setActualMinutesOverride] = useState<number | undefined>();
   const [tasks, setTasks] = useState<{ id: string; name: string; estimateMinutes: number }[]>([]);
   const [newTaskName, setNewTaskName] = useState('');
+  const [isPinned, setIsPinned] = useState(false);
+  const [scheduledTime, setScheduledTime] = useState('');
 
   useEffect(() => {
     if (block) {
@@ -27,6 +29,8 @@ export function EditBlockModal({ block, onClose, onSave }: EditBlockModalProps) 
       setCategory(block.category);
       setEstimateMinutes(block.estimateMinutes);
       setActualMinutesOverride(block.actualMinutesOverride);
+      setIsPinned(!!block.scheduledAt);
+      setScheduledTime(block.scheduledAt ?? '');
       setTasks(
         block.tasks.map((t) => ({
           id: t.id,
@@ -45,6 +49,7 @@ export function EditBlockModal({ block, onClose, onSave }: EditBlockModalProps) 
       category,
       estimateMinutes,
       actualMinutesOverride,
+      scheduledAt: isPinned && scheduledTime ? scheduledTime : undefined,
       tasks: tasks.map((t, index) => ({
         ...block.tasks.find((bt) => bt.id === t.id) || {
           id: t.id,
@@ -154,6 +159,29 @@ export function EditBlockModal({ block, onClose, onSave }: EditBlockModalProps) 
             placeholder="Leave empty to use tracked time"
             className="w-full bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)]"
           />
+        </div>
+
+        {/* Pin to time */}
+        <div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isPinned}
+              onChange={(e) => setIsPinned(e.target.checked)}
+              className="rounded border-[hsl(var(--border))]"
+            />
+            <span className="text-sm text-[hsl(var(--muted-foreground))]">
+              Pin to specific time
+            </span>
+          </label>
+          {isPinned && (
+            <input
+              type="time"
+              value={scheduledTime}
+              onChange={(e) => setScheduledTime(e.target.value)}
+              className="mt-2 w-full bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)]"
+            />
+          )}
         </div>
 
         {/* Tasks */}

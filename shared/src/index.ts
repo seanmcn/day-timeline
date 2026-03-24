@@ -223,6 +223,7 @@ export interface Block {
   completedAt?: string; // ISO 8601 UTC timestamp when block was marked complete
   actualMinutesOverride?: number;
   useTaskEstimates: boolean; // If true, estimate = sum of task estimates
+  scheduledAt?: string; // HH:mm format - pins block to specific time of day
 }
 
 // Day state stored in DynamoDB via Amplify Data
@@ -354,6 +355,72 @@ export function createDefaultDayState(
   };
 }
 
+export function isBlockPinned(block: Block): boolean {
+  return block.scheduledAt !== undefined && block.scheduledAt !== null;
+}
+
+export function getScheduledDate(scheduledAt: string, dayStartAt: string): Date {
+  const dayDate = new Date(dayStartAt);
+  const [hours, minutes] = scheduledAt.split(':').map(Number);
+  const result = new Date(dayDate);
+  result.setHours(hours, minutes, 0, 0);
+  return result;
+}
+
+// Insert a pinned block at its chronologically correct position (no splitting)
+export function insertBlockAtScheduledPosition(
+  blocks: Block[],
+  pinnedBlock: Block,
+  dayStartAt: string
+): Block[] {
+  const sorted = [...blocks].sort((a, b) => a.order - b.order);
+  const pinnedTime = getScheduledDate(pinnedBlock.scheduledAt!, dayStartAt);
+  const dayStart = new Date(dayStartAt);
+  const effectivePinnedTime = pinnedTime < dayStart ? dayStart : pinnedTime;
+
+  // Find chronological insertion point
+  let insertIndex = sorted.length;
+  let rt = new Date(dayStart);
+
+  for (let i = 0; i < sorted.length; i++) {
+    const block = sorted[i];
+    if (isBlockPinned(block)) {
+      const scheduledDate = getScheduledDate(block.scheduledAt!, dayStartAt);
+      if (scheduledDate > rt) {
+        rt = new Date(scheduledDate);
+      }
+    }
+
+    // Insert before this block if pinned time is before its start
+    if (effectivePinnedTime <= rt) {
+      insertIndex = i;
+      break;
+    }
+
+    const blockEnd = new Date(rt);
+    blockEnd.setMinutes(blockEnd.getMinutes() + getBlockEffectiveEstimate(block));
+    rt = new Date(blockEnd);
+  }
+
+  const result: Block[] = [];
+  for (let i = 0; i < sorted.length; i++) {
+    if (i === insertIndex) {
+      result.push(pinnedBlock);
+    }
+    result.push(sorted[i]);
+  }
+  if (insertIndex >= sorted.length) {
+    result.push(pinnedBlock);
+  }
+
+  // Normalize order
+  result.forEach((block, index) => {
+    block.order = index;
+  });
+
+  return result;
+}
+
 export function calculateBlockActualMinutes(block: Block): number {
   if (block.actualMinutesOverride !== undefined) {
     return block.actualMinutesOverride;
@@ -400,12 +467,20 @@ export function calculateDayMetrics(state: DayState): DayMetrics {
     }
   }
 
-  // Calculate planned bedtime (dayStart + totalPlanned)
+  // Calculate planned bedtime (walk blocks, accounting for pinned block gaps)
   let plannedBedtime: string | null = null;
   if (state.dayStartAt) {
-    const startTime = new Date(state.dayStartAt).getTime();
-    const bedtimeMs = startTime + totalPlannedMinutes * 60000;
-    plannedBedtime = new Date(bedtimeMs).toISOString();
+    const runningPlanned = new Date(state.dayStartAt);
+    for (const block of state.blocks) {
+      if (isBlockPinned(block)) {
+        const scheduledDate = getScheduledDate(block.scheduledAt!, state.dayStartAt);
+        if (scheduledDate > runningPlanned) {
+          runningPlanned.setTime(scheduledDate.getTime());
+        }
+      }
+      runningPlanned.setMinutes(runningPlanned.getMinutes() + getBlockEffectiveEstimate(block));
+    }
+    plannedBedtime = runningPlanned.toISOString();
   }
 
   // Calculate forecast bedtime based on projected end of last block
@@ -434,7 +509,13 @@ export function calculateDayMetrics(state: DayState): DayMetrics {
         // Add full estimate (actual elapsed will continue to tick)
         projectedEnd.setMinutes(projectedEnd.getMinutes() + getBlockEffectiveEstimate(block));
       } else {
-        // Not started: jump to now if behind, add full estimate
+        // Not started: anchor at scheduled time if pinned, jump to now if behind
+        if (isBlockPinned(block)) {
+          const scheduledDate = getScheduledDate(block.scheduledAt!, state.dayStartAt!);
+          if (scheduledDate > projectedEnd) {
+            projectedEnd.setTime(scheduledDate.getTime());
+          }
+        }
         if (projectedEnd < now) {
           projectedEnd.setTime(now.getTime());
         }

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import {
   DndContext,
@@ -18,6 +19,8 @@ import { type Block } from '@day-timeline/shared';
 import { useDayStore } from '@/store/dayStore';
 import { useCompletionCountdown } from '@/hooks/useCompletionCountdown';
 import { BlockItem } from './BlockItem/index';
+import { ContinuationItem } from './BlockItem/ContinuationItem';
+import { computeTimelineSegments } from '@/lib/timeline';
 
 interface BlockListProps {
   onEditBlock: (block: Block) => void;
@@ -58,22 +61,31 @@ export function BlockList({ onEditBlock, showCompletedInList = false }: BlockLis
     }
   };
 
+  const sortedBlocks = useMemo(
+    () => dayState ? [...dayState.blocks].sort((a, b) => a.order - b.order) : [],
+    [dayState]
+  );
+
+  const segments = useMemo(
+    () => dayState ? computeTimelineSegments(dayState.blocks, dayState.dayStartAt) : [],
+    [dayState]
+  );
+
   if (!dayState) return null;
 
-  const sortedBlocks = [...dayState.blocks].sort((a, b) => a.order - b.order);
-
-  // Filter blocks to show in main list:
-  // - Show if not completed
-  // - Show if in countdown (pending completion)
-  // - Show if showCompletedInList is true
-  const visibleBlocks = sortedBlocks.filter((block) => {
+  // Filter segments based on visibility rules
+  const visibleSegments = segments.filter((segment) => {
+    const block = segment.block;
     if (!block.completed) return true;
     if (isPending(block.id)) return true;
     if (showCompletedInList) return true;
     return false;
   });
 
-  const blockIds = visibleBlocks.map((b) => b.id);
+  // DnD only operates on real blocks (not continuations)
+  const sortableIds = visibleSegments
+    .filter((s) => s.type === 'block')
+    .map((s) => s.block.id);
 
   return (
     <DndContext
@@ -81,10 +93,20 @@ export function BlockList({ onEditBlock, showCompletedInList = false }: BlockLis
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <SortableContext items={blockIds} strategy={verticalListSortingStrategy}>
+      <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
         <div className="space-y-3">
           <AnimatePresence mode="popLayout">
-            {visibleBlocks.map((block, index) => {
+            {visibleSegments.map((segment, index) => {
+              if (segment.type === 'continuation') {
+                return (
+                  <ContinuationItem
+                    key={`${segment.block.id}-cont`}
+                    segment={segment}
+                  />
+                );
+              }
+
+              const block = segment.block;
               const blockIsPending = isPending(block.id);
               return (
                 <BlockItem
@@ -94,6 +116,7 @@ export function BlockList({ onEditBlock, showCompletedInList = false }: BlockLis
                   dayStartAt={dayState.dayStartAt}
                   previousBlocks={sortedBlocks.slice(0, sortedBlocks.findIndex((b) => b.id === block.id))}
                   onEdit={onEditBlock}
+                  effectiveEstimate={segment.effectiveEstimate}
                   isPendingCompletion={blockIsPending}
                   countdownSeconds={blockIsPending ? getSecondsRemaining(block.id) : 0}
                   onStartCountdown={startCountdown}

@@ -7,6 +7,7 @@ import {
   type DayMetrics,
   generateId,
   calculateDayMetrics,
+  insertBlockAtScheduledPosition,
 } from '@day-timeline/shared';
 import { dataApi } from '@/lib/data-api';
 
@@ -166,7 +167,12 @@ export const useDayStore = create<DayStore>((set, get) => ({
         completed: false,
       };
 
-      const blocks = [...state.dayState.blocks, newBlock];
+      let blocks: Block[];
+      if (newBlock.scheduledAt && state.dayState.dayStartAt) {
+        blocks = insertBlockAtScheduledPosition(state.dayState.blocks, newBlock, state.dayState.dayStartAt);
+      } else {
+        blocks = [...state.dayState.blocks, newBlock];
+      }
 
       const newState = {
         ...state.dayState,
@@ -242,6 +248,7 @@ export const useDayStore = create<DayStore>((set, get) => ({
         id: generateId(),
         sessions: [],
         completed: false,
+        scheduledAt: undefined, // Don't duplicate pinned time
         // Copy tasks with fresh IDs and reset completion
         tasks: original.tasks.map((task, i) => ({
           ...task,

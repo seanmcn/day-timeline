@@ -9,8 +9,9 @@ import {
   Trash2,
   Play,
   CheckCircle2,
+  Pin,
 } from 'lucide-react';
-import { type Block, calculateBlockActualMinutes } from '@day-timeline/shared';
+import { type Block, calculateBlockActualMinutes, isBlockPinned, getScheduledDate } from '@day-timeline/shared';
 import { useDayStore } from '@/store/dayStore';
 import { useCategoryStore } from '@/store/categoryStore';
 import { SwipeableWrapper } from './SwipeableWrapper';
@@ -25,6 +26,7 @@ interface BlockItemProps {
   dayStartAt: string | null;
   previousBlocks: Block[];
   onEdit: (block: Block) => void;
+  effectiveEstimate?: number;
   isPendingCompletion?: boolean;
   countdownSeconds?: number;
   onStartCountdown?: (blockId: string) => void;
@@ -38,6 +40,7 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
     dayStartAt,
     previousBlocks,
     onEdit,
+    effectiveEstimate,
     isPendingCompletion = false,
     countdownSeconds = 0,
     onStartCountdown,
@@ -93,6 +96,7 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
   const hasBeenStarted = block.sessions.length > 0;
   const isPaused = hasBeenStarted && !hasActiveSession && !block.completed;
   const actualMinutes = calculateBlockActualMinutes(block);
+  const displayEstimate = effectiveEstimate ?? block.estimateMinutes;
 
   // Calculate planned and projected times (accounting for delays)
   const { projectedTime, delayMinutes } = (() => {
@@ -103,7 +107,18 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
     let cumulativeProjected = new Date(dayStartAt);
 
     for (const b of previousBlocks) {
-      if (b.completed) {
+      if (isBlockPinned(b) && !b.completed && b.sessions.length === 0) {
+        // Pinned block (not yet started): anchor at scheduled time
+        const scheduledDate = getScheduledDate(b.scheduledAt!, dayStartAt);
+        if (scheduledDate > cumulativePlanned) {
+          cumulativePlanned.setTime(scheduledDate.getTime());
+        }
+        if (scheduledDate > cumulativeProjected) {
+          cumulativeProjected = new Date(scheduledDate);
+        }
+        cumulativePlanned.setMinutes(cumulativePlanned.getMinutes() + b.estimateMinutes);
+        cumulativeProjected.setMinutes(cumulativeProjected.getMinutes() + b.estimateMinutes);
+      } else if (b.completed) {
         // Planned: always add estimate (the original schedule)
         cumulativePlanned.setMinutes(cumulativePlanned.getMinutes() + b.estimateMinutes);
         // Projected: advance to actual end time if the block took time
@@ -136,8 +151,11 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
       }
     }
 
-    // For current block: use actual start time if started, otherwise use now if behind
-    if (block.sessions.length > 0) {
+    // For current block: pinned blocks anchor at their scheduled time
+    if (isBlockPinned(block) && !block.completed && block.sessions.length === 0) {
+      const scheduledDate = getScheduledDate(block.scheduledAt!, dayStartAt);
+      cumulativeProjected = scheduledDate;
+    } else if (block.sessions.length > 0) {
       // Block has been started - use the actual start time
       cumulativeProjected = new Date(block.sessions[0].startedAt);
     } else if (!block.completed && cumulativeProjected < now) {
@@ -250,6 +268,12 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
                         Active
                       </motion.span>
                     )}
+                    {block.scheduledAt && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[hsl(var(--accent)/0.2)] text-[hsl(var(--accent-foreground))] rounded-full text-xs font-medium">
+                        <Pin size={10} />
+                        {block.scheduledAt}
+                      </span>
+                    )}
                   </div>
                   {projectedTime && (
                     <div className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
@@ -299,14 +323,14 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
                   <div className="flex items-center gap-4 text-sm font-mono">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[hsl(var(--muted-foreground))] font-sans">Est:</span>
-                      <span>{formatDuration(block.estimateMinutes, false)}</span>
+                      <span>{formatDuration(displayEstimate, false)}</span>
                     </div>
                     {(actualMinutes > 0 || block.completed) && (
                       <div className="flex items-center gap-1.5">
                         <span className="text-[hsl(var(--muted-foreground))] font-sans">Act:</span>
                         <span
                           className={
-                            actualMinutes > block.estimateMinutes
+                            actualMinutes > displayEstimate
                               ? 'text-[hsl(var(--destructive))]'
                               : 'text-[hsl(var(--success))]'
                           }
@@ -338,7 +362,7 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
                 isRunning={hasActiveSession}
                 isPaused={isPaused}
                 actualMinutes={actualMinutes}
-                estimateMinutes={block.estimateMinutes}
+                estimateMinutes={displayEstimate}
                 onToggle={() => hasActiveSession ? stopSession(block.id) : startSession(block.id)}
               />
 
