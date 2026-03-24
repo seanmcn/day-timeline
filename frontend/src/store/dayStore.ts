@@ -541,13 +541,19 @@ export const useDayStore = create<DayStore>((set, get) => ({
   },
 
   handleRemoteUpdate: (remoteState: DayState) => {
-    const { lastKnownUpdatedAt, dayState, isEditing } = get();
+    const { lastKnownUpdatedAt, dayState, isEditing, isSaving } = get();
 
     // Ignore if it's for a different date
     if (dayState && remoteState.date !== dayState.date) return;
 
     // Ignore self-triggered updates (same updatedAt as our last save)
     if (remoteState.updatedAt === lastKnownUpdatedAt) return;
+
+    // If we're currently saving, this is our own update echoing back
+    if (isSaving) {
+      set({ lastKnownUpdatedAt: remoteState.updatedAt ?? null });
+      return;
+    }
 
     if (isEditing) {
       // User is busy editing - show notification

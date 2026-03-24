@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Authenticator } from '@aws-amplify/ui-react';
@@ -85,18 +85,18 @@ function AuthenticatedApp({ userId }: { userId: string }) {
     setCurrentDate(date);
   };
 
-  const handleAddBlock = (blockData: Parameters<typeof addBlock>[0]) => {
+  const handleAddBlock = useCallback((blockData: Parameters<typeof addBlock>[0]) => {
     addBlock(blockData);
-  };
+  }, [addBlock]);
 
-  const handleEditBlock = (block: Block) => {
+  const handleEditBlock = useCallback((block: Block) => {
     setIsAddModalOpen(false);
     setEditingBlock(block);
-  };
+  }, []);
 
-  const handleSaveBlock = (blockId: string, updates: Partial<Block>) => {
+  const handleSaveBlock = useCallback((blockId: string, updates: Partial<Block>) => {
     updateBlock(blockId, updates);
-  };
+  }, [updateBlock]);
 
   if (isLoading) {
     return (
