@@ -5,6 +5,7 @@ import { useTemplateStore } from '@/store/templateStore';
 import { useCategoryStore } from '@/store/categoryStore';
 import type { BlockTemplate, BlockCategory, TaskTemplate } from '@day-timeline/shared';
 import { calculateBlockEstimateFromTasks } from '@day-timeline/shared';
+import { DurationInput } from '@/components/ui/DurationInput';
 
 interface TemplateEditorProps {
   template: BlockTemplate;
@@ -124,16 +125,13 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
       {/* Duration */}
       <div className="mb-4">
         <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1">
-          Duration (minutes)
+          Duration
         </label>
         <div className="flex items-center gap-3">
-          <input
-            type="number"
+          <DurationInput
             value={useTaskEstimates ? taskSum : defaultMinutes}
-            onChange={(e) => setDefaultMinutes(parseInt(e.target.value) || 0)}
+            onChange={setDefaultMinutes}
             disabled={useTaskEstimates}
-            min="0"
-            step="15"
             className={`w-24 bg-[hsl(var(--input))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] ${
               useTaskEstimates ? 'opacity-50' : ''
             }`}
@@ -187,19 +185,11 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
                     className="flex-1 bg-transparent border-none px-2 py-1 text-sm focus:outline-none"
                     placeholder="Task name"
                   />
-                  <input
-                    type="number"
+                  <DurationInput
                     value={task.estimateMinutes || 0}
-                    onChange={(e) =>
-                      handleUpdateTask(task.id, {
-                        estimateMinutes: parseInt(e.target.value) || 0,
-                      })
-                    }
-                    min="0"
-                    step="5"
+                    onChange={(mins) => handleUpdateTask(task.id, { estimateMinutes: mins })}
                     className="w-16 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.5)]"
                   />
-                  <span className="text-xs text-[hsl(var(--muted-foreground))]">m</span>
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
@@ -224,15 +214,11 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
             placeholder="Add a task..."
             className="flex-1 bg-[hsl(var(--input))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)]"
           />
-          <input
-            type="number"
+          <DurationInput
             value={newTaskMinutes}
-            onChange={(e) => setNewTaskMinutes(parseInt(e.target.value) || 0)}
-            min="0"
-            step="5"
+            onChange={setNewTaskMinutes}
             className="w-16 bg-[hsl(var(--input))] border border-[hsl(var(--border))] rounded-lg px-2 py-2 text-sm text-center focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.5)]"
           />
-          <span className="text-xs text-[hsl(var(--muted-foreground))]">m</span>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

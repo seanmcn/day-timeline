@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Plus, Trash2 } from 'lucide-react';
 import { type BlockCategory, generateId } from '@day-timeline/shared';
 import { useCategoryStore } from '@/store/categoryStore';
+import { DurationInput } from '@/components/ui/DurationInput';
 
 interface AddBlockFormProps {
   onAdd: (block: {
@@ -126,14 +127,11 @@ export function AddBlockForm({ onAdd, onClose }: AddBlockFormProps) {
       {/* Estimate */}
       <div>
         <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1">
-          Estimated Duration (minutes)
+          Estimated Duration
         </label>
-        <input
-          type="number"
+        <DurationInput
           value={estimateMinutes}
-          onChange={(e) => setEstimateMinutes(parseInt(e.target.value) || 0)}
-          step={15}
-          min={0}
+          onChange={setEstimateMinutes}
           className="w-full bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)]"
         />
       </div>
@@ -175,14 +173,9 @@ export function AddBlockForm({ onAdd, onClose }: AddBlockFormProps) {
                 onChange={(e) => handleTaskChange(task.id, 'name', e.target.value)}
                 className="flex-1 bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)]"
               />
-              <input
-                type="number"
+              <DurationInput
                 value={task.estimateMinutes}
-                onChange={(e) =>
-                  handleTaskChange(task.id, 'estimateMinutes', parseInt(e.target.value) || 0)
-                }
-                step={5}
-                min={0}
+                onChange={(mins) => handleTaskChange(task.id, 'estimateMinutes', mins)}
                 className="w-20 bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] rounded-lg px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)]"
               />
               <motion.button
