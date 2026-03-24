@@ -218,12 +218,12 @@ export function EditBlockForm({ block, onSave, onClose, live }: EditBlockFormPro
                 }
                 step={5}
                 min={0}
-                className="w-20 bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] rounded-lg px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)]"
+                className="w-16 flex-shrink-0 bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] rounded-lg px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)]"
               />
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleRemoveTask(task.id)}
-                className="action-button p-2 hover:text-[hsl(var(--destructive))]"
+                className="action-button p-2 flex-shrink-0 hover:text-[hsl(var(--destructive))]"
               >
                 <Trash2 size={16} />
               </motion.button>
