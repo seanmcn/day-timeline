@@ -152,53 +152,40 @@ export function DayMetrics() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="flex items-center justify-between gap-2"
+            className="flex items-center justify-between gap-1"
           >
-            {/* Category icons with times */}
-            <div className="flex items-center gap-3">
-              {categories.map(([categoryId, data]) => {
+            {/* Category dots + total */}
+            <div className="flex items-center gap-1.5">
+              {categories.map(([categoryId]) => {
                 const categoryData = allCategories.find((c) => c.id === categoryId);
                 const color = categoryData?.color ?? '210 15% 50%';
-                const delta = data.actual - data.planned;
-                const deltaColor = delta > 0 ? 'text-[hsl(var(--destructive))]' : delta < 0 ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--muted-foreground))]';
 
                 return (
-                  <div key={categoryId} className="flex items-center gap-1.5">
-                    <div
-                      className="w-5 h-5 rounded flex items-center justify-center"
-                      style={{ backgroundColor: `hsl(${color} / 0.2)` }}
-                    >
-                      <DynamicIcon
-                        name={categoryData?.icon ?? 'circle'}
-                        size={10}
-                        style={{ color: `hsl(${color})` }}
-                      />
-                    </div>
-                    <span className={`text-xs font-mono ${deltaColor}`}>
-                      {formatDuration(data.actual)}
-                    </span>
-                  </div>
+                  <div
+                    key={categoryId}
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: `hsl(${color})` }}
+                    title={categoryData?.name ?? categoryId}
+                  />
                 );
               })}
 
               {/* Divider */}
-              <div className="w-px h-4 bg-[hsl(var(--border)/0.5)]" />
+              <div className="w-px h-3 bg-[hsl(var(--border)/0.5)]" />
 
               {/* Total */}
-              <div className="flex items-center gap-1.5">
-                <div className="w-5 h-5 rounded flex items-center justify-center bg-[hsl(var(--secondary))]">
-                  <Sigma size={10} className="text-[hsl(var(--foreground))]" />
-                </div>
+              <div className="flex items-center gap-1">
+                <Sigma size={9} className="text-[hsl(var(--muted-foreground))]" />
                 <span className={`text-xs font-mono ${totalDeltaColor}`}>
-                  {formatDuration(metrics.totalActualMinutes)}
+                  {formatDuration(metrics.totalActualMinutes, false)}
                 </span>
               </div>
             </div>
 
             {/* Expected End */}
-            <div className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded flex items-center justify-center bg-[hsl(var(--primary)/0.2)]">
-                <Target size={10} className="text-[hsl(var(--primary))]" />
+            <div className="flex items-center gap-1">
+              <div className="w-4 h-4 rounded flex items-center justify-center bg-[hsl(var(--primary)/0.2)]">
+                <Target size={9} className="text-[hsl(var(--primary))]" />
               </div>
               <span className="text-xs font-semibold text-[hsl(var(--primary))]">
                 {metrics.forecastBedtime ? formatTime(metrics.forecastBedtime) : '--'}
