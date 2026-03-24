@@ -74,6 +74,14 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={onDelete}
+            className="px-3 py-1.5 text-sm text-[hsl(var(--destructive))] border border-[hsl(var(--destructive)/0.3)] rounded-lg hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
+          >
+            Delete
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={onCancel}
             className="action-button px-3 py-1.5 text-sm"
           >
@@ -256,19 +264,6 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
         </div>
       </div>
 
-      {/* Delete button */}
-      {!template.isDefault && (
-        <div className="border-t border-[hsl(var(--border))] pt-4 mt-4">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onDelete}
-            className="text-sm text-[hsl(var(--destructive))] hover:underline"
-          >
-            Delete this template
-          </motion.button>
-        </div>
-      )}
     </motion.div>
   );
 }
