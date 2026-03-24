@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, RotateCcw } from 'lucide-react';
+import { Eye, EyeOff, Pencil, RotateCcw } from 'lucide-react';
 import { type Block, calculateBlockActualMinutes } from '@day-timeline/shared';
 import { useDayStore } from '@/store/dayStore';
 import { useCategoryStore } from '@/store/categoryStore';
 import { formatDuration, formatTime } from '@/lib/time';
+import { EditBlockModal } from '@/components/modals/EditBlockModal';
 
 interface CompletedBlocksSidebarProps {
   blocks: Block[];
@@ -16,8 +18,9 @@ export function CompletedBlocksSidebar({
   showInMainList,
   onToggleShowInMainList,
 }: CompletedBlocksSidebarProps) {
-  const { uncompleteBlock } = useDayStore();
+  const { uncompleteBlock, updateBlock } = useDayStore();
   const allCategories = useCategoryStore((state) => state.categories);
+  const [editingBlock, setEditingBlock] = useState<Block | null>(null);
 
   if (blocks.length === 0) return null;
 
@@ -102,21 +105,37 @@ export function CompletedBlocksSidebar({
                   )}
                 </div>
 
-                {/* Undo button */}
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => uncompleteBlock(block.id)}
-                  className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-[hsl(var(--muted))] transition-all"
-                  title="Restore"
-                >
-                  <RotateCcw size={12} className="text-[hsl(var(--muted-foreground))]" />
-                </motion.button>
+                {/* Action buttons */}
+                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setEditingBlock(block)}
+                    className="p-1 rounded hover:bg-[hsl(var(--muted))]"
+                    title="Edit"
+                  >
+                    <Pencil size={12} className="text-[hsl(var(--muted-foreground))]" />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => uncompleteBlock(block.id)}
+                    className="p-1 rounded hover:bg-[hsl(var(--muted))]"
+                    title="Restore"
+                  >
+                    <RotateCcw size={12} className="text-[hsl(var(--muted-foreground))]" />
+                  </motion.button>
+                </div>
               </motion.div>
             );
           })}
         </AnimatePresence>
       </div>
+      <EditBlockModal
+        block={editingBlock}
+        onClose={() => setEditingBlock(null)}
+        onSave={updateBlock}
+      />
     </motion.div>
   );
 }
