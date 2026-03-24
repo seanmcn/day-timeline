@@ -8,12 +8,15 @@ import { useDayStore } from '@/store/dayStore';
 import { useTemplateStore } from '@/store/templateStore';
 import { useCategoryStore } from '@/store/categoryStore';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useMediaQuery, XL_BREAKPOINT } from '@/hooks/useMediaQuery';
 import { Header } from '@/components/Header';
 import { DateNavigator } from '@/components/DateNavigator';
 import { DayStartButton } from '@/components/DayStartButton';
 import { BlockList } from '@/components/BlockList';
 import { DayMetrics } from '@/components/DayMetrics';
-import { AddBlockButton } from '@/components/AddBlockButton';
+import { FloatingAddButton } from '@/components/FloatingAddButton';
+import { SidePanel } from '@/components/SidePanel';
+import { AddBlockForm, EditBlockForm } from '@/components/forms';
 import { AddBlockModal, EditBlockModal } from '@/components/modals';
 import { CompletedBlocksSidebar } from '@/components/CompletedBlocksSidebar';
 import { CompletedBlocksToggle } from '@/components/CompletedBlocksToggle';
@@ -33,6 +36,7 @@ export default function App() {
 function AuthenticatedApp({ userId }: { userId: string }) {
   const { dayState, isLoading, error, loadDay, addBlock, updateBlock, setIsEditing } = useDayStore();
   const { loadTemplates } = useTemplateStore();
+  const isXl = useMediaQuery(XL_BREAKPOINT);
   const [currentDate, setCurrentDate] = useState(getTodayKey());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingBlock, setEditingBlock] = useState<Block | null>(null);
@@ -86,6 +90,7 @@ function AuthenticatedApp({ userId }: { userId: string }) {
   };
 
   const handleEditBlock = (block: Block) => {
+    setIsAddModalOpen(false);
     setEditingBlock(block);
   };
 
@@ -131,11 +136,11 @@ function AuthenticatedApp({ userId }: { userId: string }) {
               element={
                 <>
                   <Header />
-                  <main className="max-w-7xl mx-auto px-4 py-6 pb-24">
+                  <main className="max-w-7xl xl:max-w-[90rem] mx-auto px-4 py-6">
                     {/* Two-column layout on desktop */}
                     <div className="lg:flex lg:gap-6 lg:justify-center">
                       {/* Sidebar - date & metrics */}
-                      <div className="lg:w-80 lg:flex-shrink-0">
+                      <div className="lg:w-80 xl:w-96 lg:flex-shrink-0">
                         <DateNavigator
                           currentDate={currentDate}
                           onDateChange={handleDateChange}
@@ -147,12 +152,13 @@ function AuthenticatedApp({ userId }: { userId: string }) {
                             blocks={completedBlocks}
                             showInMainList={showCompletedInList}
                             onToggleShowInMainList={handleToggleShowCompleted}
+                            onEditBlock={handleEditBlock}
                           />
                         )}
                       </div>
 
                       {/* Main content - blocks */}
-                      <div className="flex-1 lg:max-w-2xl">
+                      <div className="flex-1 lg:max-w-2xl xl:max-w-none">
                         {!dayState?.dayStartAt ? (
                           <DayStartButton />
                         ) : (
@@ -172,7 +178,6 @@ function AuthenticatedApp({ userId }: { userId: string }) {
                               onEditBlock={handleEditBlock}
                               showCompletedInList={showCompletedInList}
                             />
-                            <AddBlockButton onClick={() => setIsAddModalOpen(true)} />
                           </motion.div>
                         )}
                       </div>
@@ -185,18 +190,53 @@ function AuthenticatedApp({ userId }: { userId: string }) {
           </Routes>
         </div>
 
-        {/* Modals */}
-        <AddBlockModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onAdd={handleAddBlock}
-        />
+        {/* FAB */}
+        {dayState?.dayStartAt && (
+          <FloatingAddButton onClick={() => setIsAddModalOpen(true)} />
+        )}
 
-        <EditBlockModal
-          block={editingBlock}
-          onClose={() => setEditingBlock(null)}
-          onSave={handleSaveBlock}
-        />
+        {/* Side panel for xl+ screens */}
+        {isXl && (
+          <SidePanel
+            isOpen={isAddModalOpen || editingBlock !== null}
+            onClose={() => {
+              setIsAddModalOpen(false);
+              setEditingBlock(null);
+            }}
+            title={editingBlock ? 'Edit Block' : 'Add Block'}
+          >
+            {editingBlock ? (
+              <EditBlockForm
+                key={editingBlock.id}
+                block={editingBlock}
+                onSave={handleSaveBlock}
+                onClose={() => setEditingBlock(null)}
+                live
+              />
+            ) : isAddModalOpen ? (
+              <AddBlockForm
+                onAdd={handleAddBlock}
+                onClose={() => setIsAddModalOpen(false)}
+              />
+            ) : null}
+          </SidePanel>
+        )}
+
+        {/* Modals for smaller screens */}
+        {!isXl && (
+          <>
+            <AddBlockModal
+              isOpen={isAddModalOpen}
+              onClose={() => setIsAddModalOpen(false)}
+              onAdd={handleAddBlock}
+            />
+            <EditBlockModal
+              block={editingBlock}
+              onClose={() => setEditingBlock(null)}
+              onSave={handleSaveBlock}
+            />
+          </>
+        )}
       </div>
     </BrowserRouter>
   );

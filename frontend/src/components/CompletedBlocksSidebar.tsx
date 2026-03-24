@@ -1,26 +1,25 @@
-import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Pencil, RotateCcw } from 'lucide-react';
 import { type Block, calculateBlockActualMinutes } from '@day-timeline/shared';
 import { useDayStore } from '@/store/dayStore';
 import { useCategoryStore } from '@/store/categoryStore';
 import { formatDuration, formatTime } from '@/lib/time';
-import { EditBlockModal } from '@/components/modals/EditBlockModal';
 
 interface CompletedBlocksSidebarProps {
   blocks: Block[];
   showInMainList: boolean;
   onToggleShowInMainList: () => void;
+  onEditBlock: (block: Block) => void;
 }
 
 export function CompletedBlocksSidebar({
   blocks,
   showInMainList,
   onToggleShowInMainList,
+  onEditBlock,
 }: CompletedBlocksSidebarProps) {
-  const { uncompleteBlock, updateBlock } = useDayStore();
+  const { uncompleteBlock } = useDayStore();
   const allCategories = useCategoryStore((state) => state.categories);
-  const [editingBlock, setEditingBlock] = useState<Block | null>(null);
 
   if (blocks.length === 0) return null;
 
@@ -110,7 +109,7 @@ export function CompletedBlocksSidebar({
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    onClick={() => setEditingBlock(block)}
+                    onClick={() => onEditBlock(block)}
                     className="p-1 rounded hover:bg-[hsl(var(--muted))]"
                     title="Edit"
                   >
@@ -131,11 +130,6 @@ export function CompletedBlocksSidebar({
           })}
         </AnimatePresence>
       </div>
-      <EditBlockModal
-        block={editingBlock}
-        onClose={() => setEditingBlock(null)}
-        onSave={updateBlock}
-      />
     </motion.div>
   );
 }
