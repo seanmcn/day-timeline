@@ -1,11 +1,9 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Settings, LogOut } from 'lucide-react';
-import { useDayStore } from '@/store/dayStore';
 import { useAuthStore } from '@/store/authStore';
 
 export function Header() {
-  const { isSaving } = useDayStore();
   const { user, logout } = useAuthStore();
 
   return (
@@ -22,12 +20,6 @@ export function Header() {
           </h1>
 
           <div className="flex items-center gap-2 lg:flex-1 lg:max-w-2xl xl:max-w-none lg:justify-end">
-          {isSaving && (
-            <span className="text-xs text-[hsl(var(--muted-foreground))] animate-pulse">
-              Saving...
-            </span>
-          )}
-
           <Link to="/settings">
             <motion.div
               whileHover={{ scale: 1.05 }}

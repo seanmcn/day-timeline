@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
+import { useDayStore } from '@/store/dayStore';
 
 interface SidePanelProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface SidePanelProps {
 }
 
 export function SidePanel({ isOpen, onClose, title, children }: SidePanelProps) {
+  const isSaving = useDayStore((state) => state.isSaving);
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -49,11 +51,18 @@ export function SidePanel({ isOpen, onClose, title, children }: SidePanelProps) 
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed top-0 right-0 z-50 h-full w-96 bg-[hsl(var(--glass-bg))] border-l border-[hsl(var(--border)/0.5)] backdrop-blur-xl shadow-2xl flex flex-col"
+            className="fixed top-0 right-0 z-50 h-full w-[28rem] bg-[hsl(var(--glass-bg))] border-l border-[hsl(var(--border)/0.5)] backdrop-blur-xl shadow-2xl flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border)/0.5)]">
-              <h2 className="font-heading text-lg font-semibold">{title}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="font-heading text-lg font-semibold">{title}</h2>
+                {isSaving && (
+                  <span className="text-xs text-[hsl(var(--muted-foreground))] animate-pulse">
+                    Saving...
+                  </span>
+                )}
+              </div>
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
