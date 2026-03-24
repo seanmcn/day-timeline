@@ -25,10 +25,9 @@ export function TaskList({ tasks, blockId: _blockId, isBlockCompleted, onToggleT
 
   const completedCount = tasks.filter((t) => t.completed).length;
   const totalCount = tasks.length;
-  const allCompleted = completedCount === totalCount;
 
   return (
-    <div className="mt-2 border-t border-[hsl(var(--border)/0.5)] pt-2">
+    <div className="mt-2 border-t border-[hsl(var(--border)/0.3)] pt-2">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="flex items-center gap-1.5 text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors w-full"
@@ -39,13 +38,8 @@ export function TaskList({ tasks, blockId: _blockId, isBlockCompleted, onToggleT
         >
           <ChevronDown size={12} />
         </motion.div>
-        <span className="font-medium">Tasks</span>
         <span
-          className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-            allCompleted
-              ? 'bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))]'
-              : 'bg-[hsl(var(--secondary))] text-[hsl(var(--muted-foreground))]'
-          }`}
+          className="text-[10px] px-1.5 py-0.5 rounded-full bg-[hsl(var(--secondary)/0.5)] text-[hsl(var(--muted-foreground)/0.7)]"
         >
           {completedCount}/{totalCount}
         </span>

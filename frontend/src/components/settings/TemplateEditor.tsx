@@ -168,8 +168,8 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
       </div>
 
       {/* Tasks */}
-      <div className="border-t border-[hsl(var(--border))] pt-4 mt-4">
-        <h4 className="text-sm font-medium mb-3">Tasks</h4>
+      <div className="border-t border-[hsl(var(--border)/0.3)] pt-4 mt-4">
+        <h4 className="text-sm text-[hsl(var(--muted-foreground))] mb-3">Notes / Checklist</h4>
 
         {template.tasks.length > 0 && (
           <div className="space-y-2 mb-4">
@@ -178,7 +178,7 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
               .map((task) => (
                 <div
                   key={task.id}
-                  className="flex items-center gap-2 bg-[hsl(var(--input))] rounded-lg p-2"
+                  className="flex items-center gap-2 bg-[hsl(var(--input)/0.5)] rounded-lg p-2"
                 >
                   <input
                     type="text"

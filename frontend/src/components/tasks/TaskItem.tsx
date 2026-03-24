@@ -16,7 +16,7 @@ export function TaskItem({ task, onToggle }: TaskItemProps) {
       onClick={onToggle}
     >
       <div
-        className={`subtask-checkbox w-4 h-4 ${task.completed ? 'checked' : ''}`}
+        className={`subtask-checkbox w-3.5 h-3.5 ${task.completed ? 'checked' : ''}`}
       >
         {task.completed && (
           <motion.div
@@ -24,15 +24,15 @@ export function TaskItem({ task, onToggle }: TaskItemProps) {
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 500 }}
           >
-            <Check size={10} className="text-[hsl(var(--primary-foreground))]" />
+            <Check size={8} className="text-[hsl(var(--primary-foreground))]" />
           </motion.div>
         )}
       </div>
       <span
         className={`flex-1 text-xs ${
           task.completed
-            ? 'line-through text-[hsl(var(--muted-foreground))]'
-            : ''
+            ? 'line-through text-[hsl(var(--muted-foreground)/0.5)]'
+            : 'text-[hsl(var(--muted-foreground)/0.8)]'
         }`}
       >
         {task.name}
