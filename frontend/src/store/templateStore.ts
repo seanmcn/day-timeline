@@ -18,7 +18,7 @@ interface TemplateStore {
   saveTemplates: () => Promise<void>;
 
   // Template CRUD
-  addTemplate: (template: Omit<BlockTemplate, 'id' | 'order'>) => void;
+  addTemplate: (template: Omit<BlockTemplate, 'id' | 'order'>) => string;
   updateTemplate: (id: string, updates: Partial<BlockTemplate>) => void;
   deleteTemplate: (id: string) => void;
   reorderTemplates: (activeId: string, overId: string) => void;
@@ -74,15 +74,17 @@ export const useTemplateStore = create<TemplateStore>((set, get) => ({
   },
 
   addTemplate: (template) => {
+    const id = generateId();
     set((state) => {
       const newTemplate: BlockTemplate = {
         ...template,
-        id: generateId(),
+        id,
         order: state.templates.length,
       };
       return { templates: [...state.templates, newTemplate] };
     });
     get().saveTemplates();
+    return id;
   },
 
   updateTemplate: (id, updates) => {

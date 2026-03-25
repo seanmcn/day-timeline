@@ -1,4 +1,3 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Plus, GripVertical, Undo2 } from 'lucide-react';
 import {
@@ -20,14 +19,15 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useTemplateStore } from '@/store/templateStore';
 import { useCategoryStore } from '@/store/categoryStore';
-import { TemplateEditor } from './TemplateEditor';
 import type { BlockTemplate } from '@day-timeline/shared';
 
-const DELETE_COUNTDOWN_SECONDS = 5;
-
-interface PendingDelete {
-  templateId: string;
-  startedAt: number;
+interface TemplateListProps {
+  editingId: string | null;
+  onEditTemplate: (id: string) => void;
+  onAddTemplate: () => void;
+  pendingDeleteId: string | null;
+  deleteCountdownSeconds: number;
+  onCancelDelete: () => void;
 }
 
 function SortableTemplateItem({
@@ -38,9 +38,6 @@ function SortableTemplateItem({
   countdownSeconds,
   getCategoryColor,
   onEdit,
-  onCancelEdit,
-  onSave,
-  onDelete,
   onUndoDelete,
 }: {
   template: BlockTemplate;
@@ -50,9 +47,6 @@ function SortableTemplateItem({
   countdownSeconds: number;
   getCategoryColor: (id: string) => string;
   onEdit: () => void;
-  onCancelEdit: () => void;
-  onSave: (updates: Partial<BlockTemplate>) => void;
-  onDelete: () => void;
   onUndoDelete: () => void;
 }) {
   const {
@@ -62,7 +56,7 @@ function SortableTemplateItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: template.id, disabled: isEditing || isPendingDelete });
+  } = useSortable({ id: template.id, disabled: isPendingDelete });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -113,27 +107,6 @@ function SortableTemplateItem({
     );
   }
 
-  if (isEditing) {
-    return (
-      <motion.div
-        ref={setNodeRef}
-        style={style}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20, scale: 0.95 }}
-        transition={{ delay: index * 0.03 }}
-        layout
-      >
-        <TemplateEditor
-          template={template}
-          onSave={onSave}
-          onCancel={onCancelEdit}
-          onDelete={onDelete}
-        />
-      </motion.div>
-    );
-  }
-
   return (
     <motion.div
       ref={setNodeRef}
@@ -145,7 +118,7 @@ function SortableTemplateItem({
       layout
     >
       <div
-        className={`glass-card-hover relative overflow-hidden ${template.isHidden ? 'opacity-50' : ''}`}
+        className={`glass-card-hover relative overflow-hidden ${template.isHidden ? 'opacity-50' : ''} ${isEditing ? 'ring-2 ring-[hsl(var(--primary)/0.5)]' : ''}`}
         style={{
           borderLeftWidth: '4px',
           borderLeftColor: `hsl(${getCategoryColor(template.category)})`,
@@ -191,17 +164,18 @@ function SortableTemplateItem({
   );
 }
 
-export function TemplateList() {
-  const { templates, addTemplate, updateTemplate, deleteTemplate, reorderTemplates } = useTemplateStore();
+export function TemplateList({
+  editingId,
+  onEditTemplate,
+  onAddTemplate,
+  pendingDeleteId,
+  deleteCountdownSeconds,
+  onCancelDelete,
+}: TemplateListProps) {
+  const { templates, reorderTemplates } = useTemplateStore();
   const allCategories = useCategoryStore((state) => state.categories);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
-  const [, forceUpdate] = useState({});
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const categories = allCategories.filter((c) => !c.isDeleted).sort((a, b) => a.order - b.order);
   const sortedTemplates = [...templates].sort((a, b) => a.order - b.order);
-  const defaultCategory = categories[0]?.id ?? 'routine';
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -220,67 +194,12 @@ export function TemplateList() {
     return cat?.color ?? '210 15% 50%';
   };
 
-  const handleAdd = () => {
-    const newTemplate: Omit<BlockTemplate, 'id' | 'order'> = {
-      name: 'New Block',
-      defaultMinutes: 60,
-      category: defaultCategory,
-      tasks: [],
-      useTaskEstimates: false,
-      isDefault: false,
-      isHidden: false,
-    };
-    addTemplate(newTemplate);
-  };
-
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
       reorderTemplates(active.id as string, over.id as string);
     }
   };
-
-  const startDelete = useCallback((templateId: string) => {
-    setEditingId(null);
-    setPendingDelete({ templateId, startedAt: Date.now() });
-  }, []);
-
-  const cancelDelete = useCallback(() => {
-    setPendingDelete(null);
-  }, []);
-
-  const getSecondsRemaining = useCallback((): number => {
-    if (!pendingDelete) return 0;
-    const elapsed = Math.floor((Date.now() - pendingDelete.startedAt) / 1000);
-    return Math.max(0, DELETE_COUNTDOWN_SECONDS - elapsed);
-  }, [pendingDelete]);
-
-  // Countdown timer for pending delete
-  useEffect(() => {
-    if (!pendingDelete) {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      return;
-    }
-
-    intervalRef.current = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - pendingDelete.startedAt) / 1000);
-      if (elapsed >= DELETE_COUNTDOWN_SECONDS) {
-        deleteTemplate(pendingDelete.templateId);
-        setPendingDelete(null);
-      }
-      forceUpdate({});
-    }, 1000);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [pendingDelete, deleteTemplate]);
 
   return (
     <div className="space-y-3">
@@ -300,17 +219,11 @@ export function TemplateList() {
                 template={template}
                 index={index}
                 isEditing={editingId === template.id}
-                isPendingDelete={pendingDelete?.templateId === template.id}
-                countdownSeconds={pendingDelete?.templateId === template.id ? getSecondsRemaining() : 0}
+                isPendingDelete={pendingDeleteId === template.id}
+                countdownSeconds={pendingDeleteId === template.id ? deleteCountdownSeconds : 0}
                 getCategoryColor={getCategoryColor}
-                onEdit={() => setEditingId(template.id)}
-                onCancelEdit={() => setEditingId(null)}
-                onSave={(updates) => {
-                  updateTemplate(template.id, updates);
-                  setEditingId(null);
-                }}
-                onDelete={() => startDelete(template.id)}
-                onUndoDelete={cancelDelete}
+                onEdit={() => onEditTemplate(template.id)}
+                onUndoDelete={onCancelDelete}
               />
             ))}
           </AnimatePresence>
@@ -323,7 +236,7 @@ export function TemplateList() {
         animate={{ opacity: 1 }}
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.99 }}
-        onClick={handleAdd}
+        onClick={onAddTemplate}
         className="w-full glass-card border-dashed border-2 border-[hsl(var(--border))]
                    text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]
                    hover:border-[hsl(var(--primary)/0.5)] transition-all

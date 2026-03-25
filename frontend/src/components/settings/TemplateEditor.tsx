@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { X, Plus } from 'lucide-react';
 import { useTemplateStore } from '@/store/templateStore';
@@ -10,11 +10,12 @@ import { DurationInput } from '@/components/ui/DurationInput';
 interface TemplateEditorProps {
   template: BlockTemplate;
   onSave: (updates: Partial<BlockTemplate>) => void;
-  onCancel: () => void;
+  onClose: () => void;
   onDelete: () => void;
+  live?: boolean;
 }
 
-export function TemplateEditor({ template, onSave, onCancel, onDelete }: TemplateEditorProps) {
+export function TemplateEditor({ template, onSave, onClose, onDelete, live }: TemplateEditorProps) {
   const { addTaskToTemplate, updateTaskInTemplate, removeTaskFromTemplate } = useTemplateStore();
   const allCategories = useCategoryStore((state) => state.categories);
   const categories = allCategories.filter((c) => !c.isDeleted).sort((a, b) => a.order - b.order);
@@ -30,15 +31,40 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskMinutes, setNewTaskMinutes] = useState(15);
 
+  const initialized = useRef(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Mark as initialized after first render to avoid auto-saving initial state
+  useEffect(() => {
+    initialized.current = false;
+    requestAnimationFrame(() => { initialized.current = true; });
+    return () => { initialized.current = false; };
+  }, [template.id]);
+
+  const buildUpdates = useCallback((): Partial<BlockTemplate> => ({
+    name,
+    defaultMinutes: useTaskEstimates ? calculateBlockEstimateFromTasks(template.tasks) : defaultMinutes,
+    category,
+    isHidden,
+    useTaskEstimates,
+    scheduledAt: isPinned && scheduledTime ? scheduledTime : undefined,
+  }), [name, defaultMinutes, category, isHidden, useTaskEstimates, isPinned, scheduledTime, template.tasks]);
+
+  // Live auto-save with debounce
+  useEffect(() => {
+    if (!live || !initialized.current) return;
+
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onSave(buildUpdates());
+    }, 300);
+
+    return () => clearTimeout(debounceRef.current);
+  }, [live, name, defaultMinutes, category, isHidden, useTaskEstimates, isPinned, scheduledTime, buildUpdates, onSave]);
+
   const handleSave = () => {
-    onSave({
-      name,
-      defaultMinutes: useTaskEstimates ? calculateBlockEstimateFromTasks(template.tasks) : defaultMinutes,
-      category,
-      isHidden,
-      useTaskEstimates,
-      scheduledAt: isPinned && scheduledTime ? scheduledTime : undefined,
-    });
+    onSave(buildUpdates());
+    onClose();
   };
 
   const handleAddTask = () => {
@@ -62,41 +88,39 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
   const taskSum = calculateBlockEstimateFromTasks(template.tasks);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="glass-card border-[hsl(var(--primary)/0.5)] p-4"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-medium">Edit Template</h3>
-        <div className="flex items-center gap-2">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onDelete}
-            className="px-3 py-1.5 text-sm text-[hsl(var(--destructive))] border border-[hsl(var(--destructive)/0.3)] rounded-lg hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
-          >
-            Delete
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onCancel}
-            className="action-button px-3 py-1.5 text-sm"
-          >
-            Cancel
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleSave}
-            className="px-3 py-1.5 text-sm bg-[hsl(var(--primary))] text-white rounded-lg hover:opacity-90 transition-opacity"
-          >
-            Save
-          </motion.button>
+    <div>
+      {/* Header - only in modal mode */}
+      {!live && (
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-medium">Edit Template</h3>
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onDelete}
+              className="px-3 py-1.5 text-sm text-[hsl(var(--destructive))] border border-[hsl(var(--destructive)/0.3)] rounded-lg hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
+            >
+              Delete
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onClose}
+              className="action-button px-3 py-1.5 text-sm"
+            >
+              Cancel
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleSave}
+              className="px-3 py-1.5 text-sm bg-[hsl(var(--primary))] text-white rounded-lg hover:opacity-90 transition-opacity"
+            >
+              Save
+            </motion.button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Name */}
       <div className="mb-4">
@@ -264,6 +288,19 @@ export function TemplateEditor({ template, onSave, onCancel, onDelete }: Templat
         </div>
       </div>
 
-    </motion.div>
+      {/* Delete - at bottom in live/sidebar mode */}
+      {live && (
+        <div className="border-t border-[hsl(var(--border)/0.3)] pt-4 mt-6">
+          <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onDelete}
+            className="w-full px-3 py-2 text-sm text-[hsl(var(--destructive))] border border-[hsl(var(--destructive)/0.3)] rounded-lg hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
+          >
+            Delete Template
+          </motion.button>
+        </div>
+      )}
+    </div>
   );
 }
