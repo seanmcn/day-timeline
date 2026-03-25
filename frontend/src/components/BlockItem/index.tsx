@@ -10,6 +10,8 @@ import {
   Play,
   CheckCircle2,
   Pin,
+  Calendar,
+  ListTodo,
 } from 'lucide-react';
 import { type Block, calculateBlockActualMinutes, isBlockPinned, getScheduledDate } from '@day-timeline/shared';
 import { useDayStore } from '@/store/dayStore';
@@ -272,6 +274,18 @@ export const BlockItem = forwardRef<HTMLDivElement, BlockItemProps>(function Blo
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[hsl(var(--accent)/0.2)] text-[hsl(var(--accent-foreground))] rounded-full text-xs font-medium">
                         <Pin size={10} />
                         {block.scheduledAt}
+                      </span>
+                    )}
+                    {block.source?.type === 'google-calendar' && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/15 text-blue-400 rounded-full text-xs font-medium">
+                        <Calendar size={10} />
+                        Google
+                      </span>
+                    )}
+                    {block.source?.type === 'google-tasks' && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/15 text-blue-400 rounded-full text-xs font-medium">
+                        <ListTodo size={10} />
+                        Task
                       </span>
                     )}
                   </div>

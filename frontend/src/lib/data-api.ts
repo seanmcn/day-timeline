@@ -1,6 +1,6 @@
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource';
-import type { DayState, Block, UserTemplates, BlockTemplate, UserCategories, Category } from '@day-timeline/shared';
+import type { DayState, Block, UserTemplates, BlockTemplate, UserCategories, Category, GoogleCalendarEvent, GoogleTaskItem } from '@day-timeline/shared';
 import { authService } from './auth-service';
 
 const client = generateClient<Schema>();
@@ -283,6 +283,107 @@ export const dataApi = {
       categories: parsedCategories as Category[],
       createdAt: result.createdAt,
       updatedAt: result.updatedAt,
+    };
+  },
+
+  /**
+   * Check if Google account is connected and get settings.
+   */
+  async getGoogleConnection(): Promise<{
+    connected: boolean;
+    email: string | null;
+    defaultCalendarCategory: string | null;
+    defaultTaskCategory: string | null;
+  }> {
+    // Model may not exist yet if sandbox hasn't been redeployed
+    if (!client.models.UserGoogleTokens) {
+      return { connected: false, email: null, defaultCalendarCategory: null, defaultTaskCategory: null };
+    }
+
+    const { data, errors } = await client.models.UserGoogleTokens.list();
+    if (errors?.length) throw new Error(errors[0].message);
+
+    const record = data[0];
+    if (!record) {
+      return { connected: false, email: null, defaultCalendarCategory: null, defaultTaskCategory: null };
+    }
+
+    return {
+      connected: true,
+      email: record.email ?? null,
+      defaultCalendarCategory: record.defaultCalendarCategory ?? null,
+      defaultTaskCategory: record.defaultTaskCategory ?? null,
+    };
+  },
+
+  /**
+   * Update Google integration category settings.
+   */
+  async updateGoogleSettings(settings: {
+    defaultCalendarCategory?: string | null;
+    defaultTaskCategory?: string | null;
+  }): Promise<void> {
+    if (!client.models.UserGoogleTokens) throw new Error('Google integration not available');
+
+    const { data } = await client.models.UserGoogleTokens.list();
+    const record = data[0];
+    if (!record) throw new Error('Google account not connected');
+
+    await client.models.UserGoogleTokens.update({
+      id: record.id,
+      ...settings,
+    });
+  },
+
+  /**
+   * Exchange Google OAuth authorization code for tokens.
+   */
+  async googleAuthExchange(
+    code: string,
+    redirectUri: string
+  ): Promise<{ success: boolean; email: string | null; error: string | null }> {
+    const { data, errors } = await client.mutations.googleAuthExchange({
+      code,
+      redirectUri,
+    });
+    if (errors?.length) throw new Error(errors[0].message);
+    return {
+      success: data?.success ?? false,
+      email: data?.email ?? null,
+      error: data?.error ?? null,
+    };
+  },
+
+  /**
+   * Sync Google Calendar events and Tasks for a date.
+   */
+  async googleSync(
+    date: string
+  ): Promise<{
+    success: boolean;
+    events: GoogleCalendarEvent[];
+    tasks: GoogleTaskItem[];
+    error: string | null;
+  }> {
+    const { data, errors } = await client.queries.googleSync({ date });
+    if (errors?.length) throw new Error(errors[0].message);
+    return {
+      success: data?.success ?? false,
+      events: (data?.events ?? []) as GoogleCalendarEvent[],
+      tasks: (data?.tasks ?? []) as GoogleTaskItem[],
+      error: data?.error ?? null,
+    };
+  },
+
+  /**
+   * Disconnect Google account.
+   */
+  async googleDisconnect(): Promise<{ success: boolean; error: string | null }> {
+    const { data, errors } = await client.mutations.googleDisconnect();
+    if (errors?.length) throw new Error(errors[0].message);
+    return {
+      success: data?.success ?? false,
+      error: data?.error ?? null,
     };
   },
 

@@ -1,7 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sun, Clock } from 'lucide-react';
+import { Sun, Clock, Loader2 } from 'lucide-react';
+import {
+  createBlockFromCalendarEvent,
+  createBlockFromGoogleTask,
+  getTodayKey,
+} from '@day-timeline/shared';
 import { useDayStore } from '@/store/dayStore';
+import { useGoogleStore } from '@/store/googleStore';
 
 const MESSAGE_VARIATIONS = [
   { heading: "Ready to start your day?", button: "I'm awake" },
@@ -26,8 +32,14 @@ const MESSAGE_VARIATIONS = [
   { heading: "Coffee time is over!", button: "Fine, let's go" },
 ];
 
+const DEFAULT_TASK_MINUTES = 30;
+
 export function DayStartButton() {
-  const { startDay } = useDayStore();
+  const { startDay, dayState, importGoogleBlocks } = useDayStore();
+  const { isConnected, defaultCalendarCategory, defaultTaskCategory } =
+    useGoogleStore();
+  const syncForDate = useGoogleStore((s) => s.syncForDate);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const message = useMemo(() => {
     const index = Math.floor(Math.random() * MESSAGE_VARIATIONS.length);
@@ -40,6 +52,48 @@ export function DayStartButton() {
     minute: '2-digit',
     hour12: true,
   });
+
+  const handleStartDay = async () => {
+    startDay();
+
+    // Sync Google Calendar/Tasks if connected
+    if (!isConnected) return;
+
+    const date = dayState?.date ?? getTodayKey();
+    setIsSyncing(true);
+
+    try {
+      const result = await syncForDate(date);
+      if (!result.success) return;
+
+      const blocks = [];
+      let order = dayState?.blocks.length ?? 0;
+
+      // Convert calendar events to pinned blocks
+      const calendarCategory = defaultCalendarCategory ?? 'work';
+      for (const event of result.events) {
+        blocks.push(
+          createBlockFromCalendarEvent(event, calendarCategory, order++)
+        );
+      }
+
+      // Convert tasks to unpinned blocks
+      const taskCategory = defaultTaskCategory ?? 'work';
+      for (const task of result.tasks) {
+        blocks.push(
+          createBlockFromGoogleTask(task, taskCategory, DEFAULT_TASK_MINUTES, order++)
+        );
+      }
+
+      if (blocks.length > 0) {
+        importGoogleBlocks(blocks);
+      }
+    } catch {
+      // Sync failure is non-critical - day still starts
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   return (
     <motion.div
@@ -86,10 +140,18 @@ export function DayStartButton() {
           transition={{ delay: 0.25 }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => startDay()}
-          className="w-full bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] font-semibold text-lg px-8 py-4 rounded-xl transition-colors glow-primary"
+          onClick={handleStartDay}
+          disabled={isSyncing}
+          className="w-full bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] font-semibold text-lg px-8 py-4 rounded-xl transition-colors glow-primary disabled:opacity-70"
         >
-          {message.button}
+          {isSyncing ? (
+            <span className="flex items-center justify-center gap-2">
+              <Loader2 size={18} className="animate-spin" />
+              Syncing Google...
+            </span>
+          ) : (
+            message.button
+          )}
         </motion.button>
 
         {/* Hint */}

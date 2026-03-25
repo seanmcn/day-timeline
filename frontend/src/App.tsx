@@ -7,6 +7,7 @@ import { type Block, getTodayKey } from '@day-timeline/shared';
 import { useDayStore } from '@/store/dayStore';
 import { useTemplateStore } from '@/store/templateStore';
 import { useCategoryStore } from '@/store/categoryStore';
+import { useGoogleStore } from '@/store/googleStore';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useMediaQuery, XL_BREAKPOINT } from '@/hooks/useMediaQuery';
 import { Header } from '@/components/Header';
@@ -22,6 +23,7 @@ import { CompletedBlocksSidebar } from '@/components/CompletedBlocksSidebar';
 import { CompletedBlocksToggle } from '@/components/CompletedBlocksToggle';
 import { SyncNotification } from '@/components/SyncNotification';
 import { SettingsPage } from '@/components/settings/SettingsPage';
+import { GoogleOAuthCallback } from '@/components/GoogleOAuthCallback';
 
 const SHOW_COMPLETED_KEY = 'day-timeline-show-completed-in-list';
 
@@ -73,11 +75,12 @@ function AuthenticatedApp({ userId }: { userId: string }) {
     }
   }, [userId, currentDate, loadDay]);
 
-  // Load templates and categories once on startup
+  // Load templates, categories, and Google connection status once on startup
   useEffect(() => {
     if (userId) {
       loadTemplates();
       useCategoryStore.getState().loadCategories();
+      useGoogleStore.getState().loadConnectionStatus();
     }
   }, [userId, loadTemplates]);
 
@@ -187,6 +190,7 @@ function AuthenticatedApp({ userId }: { userId: string }) {
               }
             />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />
           </Routes>
         </div>
 

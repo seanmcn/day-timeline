@@ -209,6 +209,12 @@ export interface TimeSession {
   endedAt: string | null; // ISO 8601 UTC, null if in progress
 }
 
+// Source tracking for blocks imported from external systems
+export interface BlockSource {
+  type: 'google-calendar' | 'google-tasks';
+  externalId?: string; // Google event/task ID for deduplication
+}
+
 // Individual block in the day
 export interface Block {
   id: string;
@@ -225,6 +231,7 @@ export interface Block {
   actualMinutesOverride?: number;
   useTaskEstimates: boolean; // If true, estimate = sum of task estimates
   scheduledAt?: string; // HH:mm format - pins block to specific time of day
+  source?: BlockSource; // Tracks origin for imported blocks (Google Calendar/Tasks)
 }
 
 // Day state stored in DynamoDB via Amplify Data
@@ -354,6 +361,78 @@ export function createDefaultDayState(
     blocks,
     createdAt: now,
     updatedAt: now,
+  };
+}
+
+// Google Calendar event shape (returned by sync Lambda)
+export interface GoogleCalendarEvent {
+  id: string;
+  summary: string;
+  startTime: string; // ISO 8601
+  endTime: string; // ISO 8601
+}
+
+// Google Task shape (returned by sync Lambda)
+export interface GoogleTaskItem {
+  id: string;
+  title: string;
+  notes?: string;
+}
+
+// Create a pinned block from a Google Calendar event
+export function createBlockFromCalendarEvent(
+  event: GoogleCalendarEvent,
+  category: BlockCategory,
+  order: number
+): Block {
+  const startDate = new Date(event.startTime);
+  const endDate = new Date(event.endTime);
+  const durationMinutes = Math.round(
+    (endDate.getTime() - startDate.getTime()) / 60000
+  );
+  const scheduledAt = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`;
+
+  return {
+    id: generateId(),
+    label: event.summary,
+    estimateMinutes: durationMinutes,
+    category,
+    sessions: [],
+    tasks: [],
+    notes: '',
+    order,
+    completed: false,
+    useTaskEstimates: false,
+    scheduledAt,
+    source: {
+      type: 'google-calendar',
+      externalId: event.id,
+    },
+  };
+}
+
+// Create an unpinned block from a Google Task
+export function createBlockFromGoogleTask(
+  task: GoogleTaskItem,
+  category: BlockCategory,
+  defaultMinutes: number,
+  order: number
+): Block {
+  return {
+    id: generateId(),
+    label: task.title,
+    estimateMinutes: defaultMinutes,
+    category,
+    sessions: [],
+    tasks: [],
+    notes: task.notes ?? '',
+    order,
+    completed: false,
+    useTaskEstimates: false,
+    source: {
+      type: 'google-tasks',
+      externalId: task.id,
+    },
   };
 }
 

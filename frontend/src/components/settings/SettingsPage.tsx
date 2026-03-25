@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, LayoutGrid, Tag } from 'lucide-react';
+import { ArrowLeft, LayoutGrid, Tag, Plug } from 'lucide-react';
 import { useTemplateStore } from '@/store/templateStore';
 import { useCategoryStore } from '@/store/categoryStore';
 import { TemplateList } from './TemplateList';
 import { CategoryList } from './CategoryList';
+import { GoogleIntegration } from './GoogleIntegration';
 
-type SettingsTab = 'blocks' | 'categories';
+type SettingsTab = 'blocks' | 'categories' | 'integrations';
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('blocks');
@@ -19,12 +20,13 @@ export function SettingsPage() {
     useCategoryStore.getState().loadCategories();
   }, []);
 
-  const isLoading = activeTab === 'blocks' ? templatesLoading : categoriesLoading;
-  const error = activeTab === 'blocks' ? templatesError : categoriesError;
+  const isLoading = activeTab === 'blocks' ? templatesLoading : activeTab === 'categories' ? categoriesLoading : false;
+  const error = activeTab === 'blocks' ? templatesError : activeTab === 'categories' ? categoriesError : null;
 
   const tabs = [
     { id: 'blocks' as const, label: 'Blocks', icon: LayoutGrid },
     { id: 'categories' as const, label: 'Categories', icon: Tag },
+    { id: 'integrations' as const, label: 'Integrations', icon: Plug },
   ];
 
   return (
@@ -101,13 +103,21 @@ export function SettingsPage() {
                 </p>
                 <TemplateList />
               </section>
-            ) : (
+            ) : activeTab === 'categories' ? (
               <section>
                 <p className="text-sm text-[hsl(var(--muted-foreground))] mb-4">
                   Manage your categories to organize and color-code your blocks.
                   Deleted categories are preserved for historical blocks.
                 </p>
                 <CategoryList />
+              </section>
+            ) : (
+              <section>
+                <p className="text-sm text-[hsl(var(--muted-foreground))] mb-4">
+                  Connect external services to automatically import events and tasks
+                  into your daily timeline.
+                </p>
+                <GoogleIntegration />
               </section>
             )}
           </motion.div>

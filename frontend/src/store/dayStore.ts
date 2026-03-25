@@ -8,6 +8,7 @@ import {
   generateId,
   calculateDayMetrics,
   insertBlockAtScheduledPosition,
+  isBlockPinned,
 } from '@day-timeline/shared';
 import { dataApi } from '@/lib/data-api';
 
@@ -51,6 +52,9 @@ interface DayStore {
   addTaskToBlock: (blockId: string, task: Omit<Task, 'id' | 'order' | 'completed'>) => void;
   updateTaskInBlock: (blockId: string, taskId: string, updates: Partial<Task>) => void;
   removeTaskFromBlock: (blockId: string, taskId: string) => void;
+
+  // Google sync
+  importGoogleBlocks: (blocks: Block[]) => void;
 
   // Sync actions
   handleRemoteUpdate: (remoteState: DayState) => void;
@@ -528,6 +532,45 @@ export const useDayStore = create<DayStore>((set, get) => ({
         });
         return { ...block, tasks };
       });
+
+      const newState = {
+        ...state.dayState,
+        blocks,
+        updatedAt: new Date().toISOString(),
+      };
+      const metrics = calculateDayMetrics(newState);
+      return { dayState: newState, metrics };
+    });
+    get().saveDay();
+  },
+
+  importGoogleBlocks: (newBlocks: Block[]) => {
+    set((state) => {
+      if (!state.dayState) return state;
+
+      // Deduplicate: skip blocks whose externalId already exists
+      const existingExternalIds = new Set(
+        state.dayState.blocks
+          .filter((b) => b.source?.externalId)
+          .map((b) => b.source!.externalId)
+      );
+
+      const blocksToAdd = newBlocks.filter(
+        (b) => !b.source?.externalId || !existingExternalIds.has(b.source.externalId)
+      );
+
+      if (blocksToAdd.length === 0) return state;
+
+      let blocks = [...state.dayState.blocks];
+
+      for (const block of blocksToAdd) {
+        if (isBlockPinned(block) && state.dayState.dayStartAt) {
+          blocks = insertBlockAtScheduledPosition(blocks, block, state.dayState.dayStartAt);
+        } else {
+          block.order = blocks.length;
+          blocks = [...blocks, block];
+        }
+      }
 
       const newState = {
         ...state.dayState,
