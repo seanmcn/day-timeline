@@ -1,4 +1,5 @@
 import { defineBackend } from '@aws-amplify/backend';
+import { Tags } from 'aws-cdk-lib';
 import { auth } from './auth/resource';
 import { data } from './data/resource';
 import { googleAuthFunc } from './functions/google-auth/resource';
@@ -31,5 +32,10 @@ for (const func of [backend.googleAuthFunc, backend.googleSyncFunc, backend.goog
   (func.resources.lambda as any).addEnvironment('TOKENS_TABLE_NAME', tableName);
   tokensTable.grantReadWriteData(func.resources.lambda);
 }
+
+// Tag all resources for AWS Cost Explorer filtering
+const environment = process.env.AWS_BRANCH ? 'production' : 'sandbox';
+Tags.of(backend.stack).add('project', 'day-timeline');
+Tags.of(backend.stack).add('environment', environment);
 
 export { backend };
